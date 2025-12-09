@@ -10,10 +10,13 @@
   background-position: center;
   background-repeat: no-repeat;
   cursor: pointer;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
 .game-container.intro-active {
   pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
 }
 
 /* Desktop: center game with max width and height */
@@ -25,6 +28,11 @@
     margin-top: calc((100vh - 70vh) / 2);
     border: 3px solid #333;
     box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+  }
+  
+  .game-container.intro-active {
+    border: none;
+    box-shadow: none;
   }
 }
 
