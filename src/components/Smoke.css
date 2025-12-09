@@ -1,0 +1,13 @@
+.smoke {
+  position: absolute;
+  pointer-events: none;
+  z-index: 5;
+  overflow: hidden;
+}
+
+.smoke img {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}

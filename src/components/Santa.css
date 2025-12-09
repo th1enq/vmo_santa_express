@@ -1,0 +1,60 @@
+.santa {
+  position: absolute;
+  left: 15%;
+  width: 100px;
+  height: 100px;
+  z-index: 10;
+  transition: transform 0.1s ease;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+/* Hitbox visualization - only show when enabled */
+.santa.show-hitbox {
+  border: 2px solid rgba(255, 0, 0, 0.3);
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.2);
+}
+
+.santa.show-hitbox::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  bottom: 20px;
+  border: 2px solid rgba(255, 0, 0, 0.8);
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.6);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.santa img {
+  pointer-events: none;
+}
+
+.santa-dead {
+  animation: santa-spin 1s linear infinite;
+}
+
+@keyframes santa-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 768px) {
+  .santa {
+    left: 20%;
+    width: 80px;
+    height: 80px;
+  }
+  
+  .santa img {
+    transform: scale(0.16) !important;
+  }
+}
