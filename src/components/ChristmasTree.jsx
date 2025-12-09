@@ -24,14 +24,20 @@ const ChristmasTree = ({ treeX, gap, gameHeight, type, size, showHitbox = false 
   
   const config = TREE_CONFIGS[type][size];
   
-  // Animation loop
+  // Detect mobile for performance optimization
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth <= 768;
+  
+  // Animation loop - reduced FPS on mobile, skip every other frame
   useEffect(() => {
+    const fps = isMobile ? 100 : 50; // 10 FPS on mobile, 20 FPS on desktop
+    const frameSkip = isMobile ? 2 : 1; // Skip every other frame on mobile
+    
     const interval = setInterval(() => {
-      setCurrentFrame((prev) => (prev + 1) % config.frames);
-    }, 50); // ~20 FPS
+      setCurrentFrame((prev) => (prev + frameSkip) % config.frames);
+    }, fps);
     
     return () => clearInterval(interval);
-  }, [config.frames]);
+  }, [config.frames, isMobile]);
   
   const frameNumber = String(currentFrame).padStart(3, '0');
   const imagePath = `/assets/${config.path}/${config.name}_${frameNumber}.png`;
@@ -45,6 +51,7 @@ const ChristmasTree = ({ treeX, gap, gameHeight, type, size, showHitbox = false 
   
   const treeHeight = heights[size];
   const treeHitboxPadding = 20; // Same as collision detection
+  const treeHitboxHeightReduction = 20; // Reduce hitbox height from top
   
   return (
     <div
@@ -75,7 +82,7 @@ const ChristmasTree = ({ treeX, gap, gameHeight, type, size, showHitbox = false 
             position: 'absolute',
             left: `${treeHitboxPadding}px`,
             right: `${treeHitboxPadding}px`,
-            top: 0,
+            top: `${treeHitboxHeightReduction}px`,
             bottom: 0,
             border: '2px solid rgba(255, 165, 0, 0.8)',
             boxShadow: '0 0 10px rgba(255, 165, 0, 0.6)',

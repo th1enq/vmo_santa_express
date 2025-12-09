@@ -38,6 +38,9 @@ const GIFT_FALL_SPEED = 2;
 const GIFT_GRAVITY = 0.3;
 const GIFT_SIZE = 60;
 
+// Detect mobile device
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth <= 768;
+
 function App() {
   const [showIntro, setShowIntro] = useState(true);
   const [santaY, setSantaY] = useState(300);
@@ -56,6 +59,7 @@ function App() {
   const [gameHeight, setGameHeight] = useState(900);
   const [showHitbox, setShowHitbox] = useState(false);
   const [pipeGap, setPipeGap] = useState(PIPE_GAP_DESKTOP);
+  const [enableSmoke, setEnableSmoke] = useState(!isMobile); // Disable smoke on mobile
   
   const gameLoopRef = useRef(null);
   const pipeTimerRef = useRef(null);
@@ -139,29 +143,33 @@ function App() {
       setGameStarted(true);
       playSound('wing');
       setSantaVelocity(JUMP_STRENGTH);
-      // Add smoke effect
-      const santaLeft = gameWidth * 0.15;
-      setSmokes(prev => [...prev, {
-        id: Date.now(),
-        x: santaLeft - 50,
-        y: santaYRef.current,
-        frame: 0,
-        createdAt: Date.now()
-      }]);
+      // Add smoke effect (disabled on mobile for performance)
+      if (enableSmoke) {
+        const santaLeft = gameWidth * 0.15;
+        setSmokes(prev => [...prev, {
+          id: Date.now(),
+          x: santaLeft - 50,
+          y: santaYRef.current,
+          frame: 0,
+          createdAt: Date.now()
+        }]);
+      }
     } else if (!isDead) {
       playSound('wing');
       setSantaVelocity(JUMP_STRENGTH);
-      // Add smoke effect
-      const santaLeft = gameWidth * 0.15;
-      setSmokes(prev => [...prev, {
-        id: Date.now(),
-        x: santaLeft - 60,
-        y: santaYRef.current,
-        frame: 0,
-        createdAt: Date.now()
-      }]);
+      // Add smoke effect (disabled on mobile for performance)
+      if (enableSmoke) {
+        const santaLeft = gameWidth * 0.15;
+        setSmokes(prev => [...prev, {
+          id: Date.now(),
+          x: santaLeft - 60,
+          y: santaYRef.current,
+          frame: 0,
+          createdAt: Date.now()
+        }]);
+      }
     }
-  }, [gameOver, gameStarted, isDead, playSound, gameWidth]);
+  }, [gameOver, gameStarted, isDead, playSound, gameWidth, enableSmoke]);
 
   // Handle keyboard and touch input
   useEffect(() => {
@@ -315,9 +323,11 @@ function App() {
         }
       };
 
-      // Generate decors more frequently (every 500-1200ms)
+      // Generate decors - less frequently on mobile for performance
       const scheduleNextDecor = () => {
-        const delay = Math.random() * 700 + 500;
+        const delay = isMobile 
+          ? Math.random() * 1400 + 1000  // 1-2.4s on mobile (less frequent)
+          : Math.random() * 700 + 500;   // 0.5-1.2s on desktop
         decorTimerRef.current = setTimeout(() => {
           if (gameStarted && !gameOver) {
             generateDecor();
@@ -478,10 +488,11 @@ function App() {
             const treeHeights = { small: 250, medium: 300, large: 350 };
             const treeHeight = treeHeights[pipe.treeSize];
             const groundHeight = 80; // Ground height
+            const treeHitboxHeightReduction = 40; // Reduce hitbox height from top
             
             // Convert tree position to top-down coordinates
             // Tree is positioned from bottom, so treeTop (in top-down coords) = gameHeight - groundHeight - treeHeight
-            const treeTopY = gameHeight - groundHeight - treeHeight;
+            const treeTopY = gameHeight - groundHeight - treeHeight + treeHitboxHeightReduction; // Move hitbox down
             const treeBottomY = gameHeight - groundHeight;
             
             // Tree collision: Santa overlaps with tree area

@@ -9,6 +9,10 @@
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;
+  /* GPU acceleration for smoother animation */
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 /* Hitbox visualization - only show when enabled */

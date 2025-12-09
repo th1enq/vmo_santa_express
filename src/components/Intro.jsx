@@ -1,6 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import './Intro.css';
 
+// Preload Christmas tree images
+const preloadTreeImages = () => {
+  const treeTypes = [
+    { path: 'CHRISTMAS TREE SMALL - FANTASY', name: 'Christmas Tree Small Fantasy', frames: 127 },
+    { path: 'CHRISTMAS TREE MEDIUM - GREEN', name: 'Christmas Tree Medium Green', frames: 119 },
+    { path: 'CHRISTMAS TREE SMALL- GREEN TEAL', name: 'Christmas Tree Small Green Teal', frames: 127 }
+  ];
+
+  treeTypes.forEach(tree => {
+    // Preload every 10th frame to reduce initial load
+    for (let i = 0; i < tree.frames; i += 10) {
+      const frameNumber = String(i).padStart(3, '0');
+      const img = new Image();
+      img.src = `/assets/${tree.path}/${tree.name}_${frameNumber}.png`;
+    }
+  });
+};
+
 const SCRIPTS = [
   {
     id: 1,
@@ -26,6 +44,11 @@ const Intro = ({ onComplete }) => {
 
   const script = SCRIPTS[currentScript];
   const fullText = script.text;
+
+  // Preload tree images on mount
+  useEffect(() => {
+    preloadTreeImages();
+  }, []);
 
   // Typing animation
   useEffect(() => {
