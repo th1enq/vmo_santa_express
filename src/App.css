@@ -5,7 +5,7 @@
   margin: 0;
   position: relative;
   overflow: hidden;
-  background-image: url('/assets/bg.png');
+  background-image: url('/assets/bg_3.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -16,11 +16,13 @@
   pointer-events: none;
 }
 
-/* Desktop: center game with max width */
+/* Desktop: center game with max width and height */
 @media (min-width: 801px) {
   .game-container {
     max-width: 800px;
+    height: 70vh;
     margin: 0 auto;
+    margin-top: calc((100vh - 70vh) / 2);
     border: 3px solid #333;
     box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
   }

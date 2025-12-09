@@ -1,54 +1,48 @@
 import React from 'react';
 import './Ground.css';
 
-const Ground = ({ gameWidth, gameStarted, gameOver }) => {
-  // Ground tile at position (0, 0) with size 32x32 in tiles.png
-  // Scale to 80px height (original ground height)
-  const originalTileSize = 32;
-  const displayHeight = 80;
-  const scale = displayHeight / originalTileSize; // 80/32 = 2.5
-  const displayWidth = originalTileSize * scale; // 32 * 2.5 = 80px
-  
-  // Calculate how many tiles needed to fill the width (double for seamless loop)
-  const tileCount = Math.ceil(gameWidth / displayWidth) + 2;
+const Ground = ({ gameWidth, gameStarted, gameOver, showHitbox }) => {
+  // New tiles.png dimensions: 336x112
+  // Use full image as repeating background
+  const imageWidth = 336;
+  const imageHeight = 112;
+  const displayHeight = 80; // Keep ground height at 80px
+  const scale = displayHeight / imageHeight; // Scale to fit 80px height
+  const displayWidth = imageWidth * scale; // Scaled width to maintain aspect ratio
   
   // Animation should run when game started and not over
   const shouldAnimate = gameStarted && !gameOver;
   
   return (
     <div className="ground-container">
+      {showHitbox && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: '80px',
+            border: '3px solid red',
+            backgroundColor: 'rgba(255, 0, 0, 0.2)',
+            pointerEvents: 'none',
+            zIndex: 101,
+          }}
+        />
+      )}
       <div 
         className={`ground-tiles ${shouldAnimate ? 'moving' : ''}`}
         style={{
           '--tile-width': `${displayWidth}px`,
+          width: `${displayWidth * 6}px`, // Multiple tiles for seamless loop
+          height: `${displayHeight}px`,
+          backgroundImage: 'url(/assets/tiles.png)',
+          backgroundRepeat: 'repeat-x',
+          backgroundSize: `${displayWidth}px ${displayHeight}px`,
+          backgroundPosition: '0 0',
+          imageRendering: 'pixelated',
         }}
       >
-        {/* Ground tiles */}
-        {Array.from({ length: tileCount }).map((_, index) => (
-          <div
-            key={index}
-            className="ground-tile"
-            style={{
-              left: `${index * displayWidth}px`,
-              width: `${displayWidth}px`,
-              height: `${displayHeight}px`,
-            }}
-          >
-            <img
-              src="/assets/tiles.png"
-              alt="ground"
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'none',
-                objectPosition: '0px 0px',
-                transform: `scale(${scale})`,
-                transformOrigin: 'top left',
-                imageRendering: 'pixelated',
-              }}
-            />
-          </div>
-        ))}
       </div>
     </div>
   );

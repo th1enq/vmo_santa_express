@@ -15,6 +15,20 @@
   background-repeat: no-repeat;
 }
 
+/* Desktop: match game container size */
+@media (min-width: 801px) {
+  .intro-container {
+    max-width: 800px;
+    height: 70vh;
+    margin: 0 auto;
+    margin-top: calc((100vh - 70vh) / 2);
+    left: 50%;
+    transform: translateX(-50%);
+    border: 3px solid #333;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+  }
+}
+
 .intro-background {
   position: relative;
   width: 100%;

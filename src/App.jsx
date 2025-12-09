@@ -8,6 +8,10 @@ import Ground from './components/Ground';
 import ChristmasTree from './components/ChristmasTree';
 import Decor from './components/Decor';
 import Intro from './components/Intro';
+import MainMenu from './components/MainMenu';
+import FloatingGiftbox from './components/FloatingGiftbox';
+import EnterID from './components/EnterID';
+import LoadingScreen from './components/LoadingScreen';
 import './App.css';
 
 // Audio files
@@ -24,6 +28,11 @@ const soundFiles = {
   die: '/assets/audio/die.wav',
   swoosh: '/assets/audio/swoosh.wav'
 };
+
+// Background music
+const bgMusic = new Audio('/assets/audio/bg.wav');
+bgMusic.volume = 0.2;
+bgMusic.loop = true;
 
 const GRAVITY = 0.5;
 const JUMP_STRENGTH = -8;
@@ -42,7 +51,13 @@ const GIFT_SIZE = 60;
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth <= 768;
 
 function App() {
-  const [showIntro, setShowIntro] = useState(true);
+  const [showLoading, setShowLoading] = useState(true);
+  const [showMainMenu, setShowMainMenu] = useState(false);
+  const [showIntro, setShowIntro] = useState(false);
+  const [showEnterID, setShowEnterID] = useState(false);
+  const [vmoId, setVmoId] = useState('');
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showCredits, setShowCredits] = useState(false);
   const [santaY, setSantaY] = useState(300);
   const [santaVelocity, setSantaVelocity] = useState(0);
   const [rotation, setRotation] = useState(0);
@@ -50,6 +65,7 @@ function App() {
   const [gifts, setGifts] = useState([]);
   const [smokes, setSmokes] = useState([]);
   const [decors, setDecors] = useState([]);
+  const [floatingGiftboxes, setFloatingGiftboxes] = useState([]);
   const [score, setScore] = useState(0);
   const [highScore, setHighScore] = useState(0);
   const [gameStarted, setGameStarted] = useState(false);
@@ -59,7 +75,7 @@ function App() {
   const [gameHeight, setGameHeight] = useState(900);
   const [showHitbox, setShowHitbox] = useState(false);
   const [pipeGap, setPipeGap] = useState(PIPE_GAP_DESKTOP);
-  const [enableSmoke, setEnableSmoke] = useState(!isMobile); // Disable smoke on mobile
+  const [enableSmoke, setEnableSmoke] = useState(true); // Enable smoke for all devices
   
   const gameLoopRef = useRef(null);
   const pipeTimerRef = useRef(null);
@@ -68,6 +84,7 @@ function App() {
   const scoredPipesRef = useRef(new Set());
   const gameContainerRef = useRef(null);
   const santaYRef = useRef(300);
+  const bgMusicRef = useRef(bgMusic);
 
   // Play sound helper function - creates new audio instance each time
   const playSound = useCallback((soundName) => {
@@ -124,6 +141,11 @@ function App() {
   }, [score, highScore]);
 
   const jump = useCallback(() => {
+    // Don't allow jumping when loading, intro, enter ID, or menu is showing
+    if (showLoading || showIntro || showEnterID || showMainMenu) {
+      return;
+    }
+    
     if (gameOver) {
       // Restart game
       playSound('swoosh');
@@ -169,7 +191,7 @@ function App() {
         }]);
       }
     }
-  }, [gameOver, gameStarted, isDead, playSound, gameWidth, enableSmoke]);
+  }, [gameOver, gameStarted, isDead, playSound, gameWidth, enableSmoke, showLoading, showIntro, showEnterID, showMainMenu]);
 
   // Handle keyboard and touch input
   useEffect(() => {
@@ -220,48 +242,82 @@ function App() {
   useEffect(() => {
     if (gameStarted && !gameOver) {
       const generatePipe = () => {
-        // Random tree properties first
-        const types = ['fantasy', 'green', 'greenTeal'];
-        const treeType = types[Math.floor(Math.random() * types.length)];
-        
-        // Random tree size
-        const sizes = ['small', 'medium', 'large'];
-        const treeSize = sizes[Math.floor(Math.random() * sizes.length)];
-        
-        // Tree heights based on size
-        const treeHeights = { small: 250, medium: 300, large: 350 };
-        const treeHeight = treeHeights[treeSize];
-        const groundHeight = 80;
-        
-        // Detect mobile device
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
-        const gapSize = isMobile ? 155 : 180; // Mobile: 155, Desktop: 180
-        
-        // Calculate tree top position (from top of screen)
-        const treeTopY = gameHeight - groundHeight - treeHeight;
-        
-        // Pipe top height = tree top - gap
-        // This ensures gap is always exactly 90px regardless of tree size
-        const height = treeTopY - gapSize;
-        
-        setPipes((prev) => [
-          ...prev,
-          {
+        setPipes((prevPipes) => {
+          // Check if we should spawn a new pipe
+          // Only spawn if last pipe has moved far enough
+          const minDistance = 300; // Minimum distance between pipes
+          
+          if (prevPipes.length > 0) {
+            const lastPipe = prevPipes[prevPipes.length - 1];
+            const distanceFromRight = gameWidth - lastPipe.x;
+            
+            // If last pipe hasn't moved far enough, don't spawn
+            if (distanceFromRight < minDistance) {
+              return prevPipes;
+            }
+          }
+          
+          // Random tree properties first
+          const types = ['fantasy', 'green', 'greenTeal'];
+          const treeType = types[Math.floor(Math.random() * types.length)];
+          
+          // Random tree size with more variation
+          const sizes = ['small', 'medium', 'large'];
+          const treeSize = sizes[Math.floor(Math.random() * sizes.length)];
+          
+          // Tree heights based on size - wider range for more variation
+          const treeHeights = { small: 200, medium: 300, large: 400 };
+          const treeHeight = treeHeights[treeSize];
+          const groundHeight = 80;
+          
+          // Detect mobile device
+          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+          const gapSize = isMobile ? 170 : 190; // Mobile: 155, Desktop: 180
+          
+          // Calculate tree top position (from top of screen)
+          const treeTopY = gameHeight - groundHeight - treeHeight;
+          
+          // Pipe top height = tree top - gap
+          // This ensures gap is always exactly same size regardless of tree size
+          const height = treeTopY - gapSize;
+          
+          // 50% chance to spawn a floating giftbox between pipes
+          const shouldSpawnGiftbox = Math.random() > 0.5;
+          
+          const newPipe = {
             id: Date.now(),
             x: gameWidth,
             topHeight: height,
             passed: false,
             treeType,
             treeSize,
-          },
-        ]);
+          };
+          
+          // Spawn floating giftbox in the gap
+          if (shouldSpawnGiftbox) {
+            const giftboxY = height + gapSize / 2 - 30; // Center in gap
+            const randomOffset = Math.random() * 40 - 20; // Random offset ±20px
+            
+            setFloatingGiftboxes((prev) => [
+              ...prev,
+              {
+                id: Date.now() + Math.random(),
+                x: gameWidth + PIPE_WIDTH / 2 - 30, // Center horizontally
+                initialY: giftboxY + randomOffset,
+                animationOffset: Math.random() * Math.PI * 2, // Random start phase
+              },
+            ]);
+          }
+          
+          return [...prevPipes, newPipe];
+        });
       };
 
       // Generate first pipe immediately
       generatePipe();
 
-      // Then generate pipes at intervals
-      pipeTimerRef.current = setInterval(generatePipe, 2000);
+      // Check for new pipes more frequently, but generatePipe will decide if spawn is needed
+      pipeTimerRef.current = setInterval(generatePipe, 100); // Check every 100ms
 
       return () => {
         if (pipeTimerRef.current) {
@@ -273,6 +329,8 @@ function App() {
 
   // Generate decorations (similar to pipes)
   useEffect(() => {
+    // Temporarily disabled decorations
+    /*
     if (gameStarted && !gameOver) {
       const generateDecor = () => {
         // 60% chance to spawn a decor
@@ -343,6 +401,7 @@ function App() {
         }
       };
     }
+    */
   }, [gameStarted, gameOver, gameWidth]);
 
   // Generate gifts
@@ -389,54 +448,74 @@ function App() {
         // Get current positions for collision detection
         const currentSantaY = santaYRef.current;
         const santaLeftPos = gameWidth * 0.15;
-        const santaLeft = santaLeftPos + SANTA_HITBOX_PADDING;
-        const santaRight = santaLeft + SANTA_SIZE - (SANTA_HITBOX_PADDING * 2);
-        const santaTop = currentSantaY + SANTA_HITBOX_PADDING;
-        const santaBottom = currentSantaY + SANTA_SIZE - SANTA_HITBOX_PADDING;
+        
+        // Adjust Santa size and hitbox padding for mobile
+        const currentSantaSize = isMobile ? 80 : SANTA_SIZE;
+        const scaleFactor = isMobile ? 0.8 : 1;
+        
+        // Hitbox padding matching visual hitbox in Santa.css
+        const hitboxPaddingLeft = 20 * scaleFactor;   // 20px desktop, 16px mobile
+        const hitboxPaddingRight = 10 * scaleFactor;  // 10px desktop, 8px mobile
+        const hitboxPaddingTop = 20 * scaleFactor;    // 20px desktop, 16px mobile
+        const hitboxPaddingBottom = 10 * scaleFactor; // 10px desktop, 8px mobile
+        
+        const santaLeft = santaLeftPos + hitboxPaddingLeft;
+        const santaRight = santaLeftPos + currentSantaSize - hitboxPaddingRight;
+        const santaTop = currentSantaY + hitboxPaddingTop;
+        const santaBottom = currentSantaY + currentSantaSize - hitboxPaddingBottom;
 
         // Update santa position
         setSantaY((y) => {
           const newY = y + santaVelocity;
+          const groundHeight = 80;
+          const groundLevel = gameHeight - groundHeight;
           
-          // If dead, allow falling off screen
-          if (isDead) {
-            if (newY > gameHeight + SANTA_SIZE) {
-              // Santa has fallen off screen completely
-              if (!gameOver) {
-                setGameOver(true);
-              }
-            }
-            return newY; // Keep falling
-          }
+          // Calculate Santa's bottom position with hitbox padding
+          const santaBottomEdge = newY + currentSantaSize - hitboxPaddingBottom;
           
-          // Normal collision (when alive)
-          // Check ground collision
-          if (newY >= gameHeight - SANTA_SIZE) {
+          // Check ground collision using hitbox
+          if (santaBottomEdge >= groundLevel) {
             if (!isDead) {
               playSound('hit');
               setTimeout(() => playSound('die'), 100);
               setIsDead(true);
             }
-            return gameHeight - SANTA_SIZE;
+            // Stop at ground level and trigger game over
+            if (!gameOver) {
+              setTimeout(() => setGameOver(true), 500);
+            }
+            // Return position where bottom of hitbox touches ground
+            return groundLevel - currentSantaSize + hitboxPaddingBottom;
           }
-          // Check ceiling collision
-          if (newY < 0) {
+          
+          // Check ceiling collision using hitbox
+          const santaTopEdge = newY + hitboxPaddingTop;
+          
+          if (santaTopEdge < 0) {
             if (!isDead) {
               playSound('hit');
               setTimeout(() => playSound('die'), 100);
               setIsDead(true);
             }
-            return 0;
+            return -hitboxPaddingTop;
           }
+          
           return newY;
         });
 
         // Update santa velocity
-        // Always apply gravity when dead to make Santa fall
-        if (isDead) {
+        // Stop applying gravity when at ground level
+        const groundHeight = 80;
+        const groundLevel = gameHeight - groundHeight;
+        const santaBottomEdge = santaY + currentSantaSize - hitboxPaddingBottom;
+        
+        if (isDead && santaBottomEdge < groundLevel) {
           setSantaVelocity((v) => v + GRAVITY);
-        } else if (santaY < gameHeight - SANTA_SIZE) {
+        } else if (!isDead && santaBottomEdge < groundLevel) {
           setSantaVelocity((v) => v + GRAVITY);
+        } else {
+          // At ground, stop velocity
+          setSantaVelocity(0);
         }
 
         // Update rotation based on velocity (handle death spin)
@@ -485,19 +564,19 @@ function App() {
             }
             
             // Check collision with Christmas tree (bottom obstacle)
-            const treeHeights = { small: 250, medium: 300, large: 350 };
+            const treeHeights = { small: 200, medium: 300, large: 400 };
             const treeHeight = treeHeights[pipe.treeSize];
             const groundHeight = 80; // Ground height
-            const treeHitboxHeightReduction = 40; // Reduce hitbox height from top
+            const treeHitboxHeightReduction = 0; // No reduction - full height hitbox
             
             // Convert tree position to top-down coordinates
             // Tree is positioned from bottom, so treeTop (in top-down coords) = gameHeight - groundHeight - treeHeight
-            const treeTopY = gameHeight - groundHeight - treeHeight + treeHitboxHeightReduction; // Move hitbox down
+            const treeTopY = gameHeight - groundHeight - treeHeight + treeHitboxHeightReduction;
             const treeBottomY = gameHeight - groundHeight;
             
             // Tree collision: Santa overlaps with tree area
-            // Use smaller hitbox for more forgiving gameplay
-            const treeHitboxPadding = 20; // Make tree hitbox narrower
+            // Use full width hitbox
+            const treeHitboxPadding = 0; // Full width hitbox
             if (santaRight > (pipeLeft + treeHitboxPadding) && santaLeft < (pipeRight - treeHitboxPadding)) {
               // Check if any part of Santa is inside the tree (using top-down Y coordinates)
               if (santaBottom > treeTopY && santaTop < treeBottomY) {
@@ -519,6 +598,48 @@ function App() {
           });
 
           return updatedPipes;
+        });
+
+        // Update floating giftboxes position and check collision
+        setFloatingGiftboxes((prevGiftboxes) => {
+          // Use same hitbox as main collision detection
+          const giftboxSantaLeft = santaLeft;
+          const giftboxSantaRight = santaRight;
+          const giftboxSantaTop = santaTop;
+          const giftboxSantaBottom = santaBottom;
+          
+          return prevGiftboxes
+            .map((giftbox) => {
+              const newGiftbox = {
+                ...giftbox,
+                x: giftbox.x - PIPE_SPEED,
+              };
+              
+              // Check collision with Santa
+              if (!giftbox.collected && !isDead) {
+                const giftboxLeft = giftbox.x;
+                const giftboxRight = giftbox.x + 60; // Giftbox size
+                const giftboxTop = giftbox.initialY;
+                const giftboxBottom = giftbox.initialY + 60;
+                
+                const collision = 
+                  giftboxSantaRight > giftboxLeft &&
+                  giftboxSantaLeft < giftboxRight &&
+                  giftboxSantaBottom > giftboxTop &&
+                  giftboxSantaTop < giftboxBottom;
+                
+                if (collision) {
+                  // Collect giftbox
+                  playSound('point');
+                  setScore((prev) => prev + 1);
+                  newGiftbox.collected = true;
+                  return null; // Remove from array
+                }
+              }
+              
+              return newGiftbox;
+            })
+            .filter((giftbox) => giftbox && giftbox.x > -100); // Remove when off screen or collected
         });
 
         // Update decorations position
@@ -610,11 +731,56 @@ function App() {
     }
   }, [gameStarted, gameOver, santaVelocity, santaY, gameHeight, gameWidth, isDead]);
 
+  const handlePlay = () => {
+    setShowMainMenu(false);
+    // Start background music
+    bgMusicRef.current.play().catch(err => console.log('Background music play failed:', err));
+    // Start game directly, don't show intro again
+  };
+
+  const handleLeaderboard = () => {
+    setShowMainMenu(false);
+    setShowLeaderboard(true);
+  };
+
+  const handleCredits = () => {
+    setShowMainMenu(false);
+    setShowCredits(true);
+  };
+
   return (
     <>
-      {showIntro && <Intro onComplete={() => setShowIntro(false)} />}
+      {showLoading && <LoadingScreen onComplete={() => {
+        setShowLoading(false);
+        setShowEnterID(true);
+      }} />}
+
+      {showMainMenu && (
+        <MainMenu 
+          onPlay={handlePlay}
+          onLeaderboard={handleLeaderboard}
+          onCredits={handleCredits}
+        />
+      )}
+
+      {showIntro && <Intro onComplete={() => {
+        setShowIntro(false);
+        setShowMainMenu(true);
+      }} />}
+
+      {showEnterID && <EnterID 
+        onSubmit={(id) => {
+          setVmoId(id);
+          setShowEnterID(false);
+          setShowIntro(true);
+        }} 
+        onCancel={() => {
+          setShowEnterID(false);
+          setShowIntro(true);
+        }}
+      />}
       
-      <div className={`game-container ${showIntro ? 'intro-active' : ''}`} ref={gameContainerRef}>
+      <div className={`game-container ${showLoading || showIntro || showEnterID || showMainMenu ? 'intro-active' : ''}`} ref={gameContainerRef}>
         <Score 
           score={score} 
           highScore={highScore}
@@ -642,6 +808,15 @@ function App() {
             showHitbox={showHitbox}
           />
         </React.Fragment>
+      ))}
+
+      {floatingGiftboxes.map((giftbox) => (
+        <FloatingGiftbox
+          key={giftbox.id}
+          x={giftbox.x}
+          y={giftbox.initialY}
+          showHitbox={showHitbox}
+        />
       ))}
 
       {gifts.map((gift) => (
@@ -673,7 +848,7 @@ function App() {
         />
       ))}
 
-      <Ground gameWidth={gameWidth} gameStarted={gameStarted} gameOver={gameOver} />
+      <Ground gameWidth={gameWidth} gameStarted={gameStarted} gameOver={gameOver} showHitbox={showHitbox} />
     </div>
     </>
   );

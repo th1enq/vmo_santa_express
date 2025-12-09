@@ -16,19 +16,15 @@
 }
 
 /* Hitbox visualization - only show when enabled */
-.santa.show-hitbox {
-  border: 2px solid rgba(255, 0, 0, 0.3);
-  box-shadow: 0 0 10px rgba(255, 0, 0, 0.2);
-}
-
 .santa.show-hitbox::before {
   content: '';
   position: absolute;
   top: 20px;
   left: 20px;
-  right: 20px;
-  bottom: 20px;
+  right: 10px;
+  bottom: 10px;
   border: 2px solid rgba(255, 0, 0, 0.8);
+  background-color: rgba(255, 0, 0, 0.2);
   box-shadow: 0 0 10px rgba(255, 0, 0, 0.6);
   pointer-events: none;
   z-index: 1;
@@ -60,5 +56,13 @@
   
   .santa img {
     transform: scale(0.16) !important;
+  }
+  
+  /* Adjust hitbox for mobile size (80px instead of 100px) */
+  .santa.show-hitbox::before {
+    top: 16px;   /* 20px * 0.8 = 16px */
+    left: 16px;  /* 20px * 0.8 = 16px */
+    right: 8px;  /* 10px * 0.8 = 8px */
+    bottom: 8px; /* 10px * 0.8 = 8px */
   }
 }

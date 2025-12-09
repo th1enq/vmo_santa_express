@@ -5,7 +5,7 @@
   right: 0;
   height: 80px;
   overflow: hidden;
-  z-index: 3;
+  z-index: 100;
   pointer-events: none;
 }
 
@@ -20,7 +20,7 @@
 }
 
 .ground-tiles.moving {
-  animation: groundScroll 2.67s linear infinite;
+  animation: groundScroll 1.5s linear infinite;
 }
 
 @keyframes groundScroll {

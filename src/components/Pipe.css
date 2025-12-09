@@ -32,9 +32,3 @@
   display: block;
   min-height: 100%;
 }
-
-@media (max-width: 768px) {
-  .pipe {
-    width: 70px;
-  }
-}

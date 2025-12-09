@@ -9,12 +9,12 @@ const PipePair = ({ pipeX, topPipeHeight, gap, gameHeight, showHitbox = false })
         className={`pipe pipe-top ${showHitbox ? 'show-hitbox' : ''}`}
         style={{
           left: `${pipeX}px`,
-          height: `${topPipeHeight}px`,
-          top: 0,
+          height: `${topPipeHeight + 20}px`,
+          top: '-20px',
         }}
       >
         <img 
-          src="/assets/pipe_green.png" 
+          src="/assets/red_pipe.png" 
           alt="pipe"
           className="pipe-image"
           style={{
