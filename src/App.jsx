@@ -272,7 +272,7 @@ function App() {
           
           // Detect mobile device
           const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
-          const gapSize = isMobile ? 170 : 190; // Mobile: 155, Desktop: 180
+          const gapSize = isMobile ? 180 : 190; // Mobile: 155, Desktop: 180
           
           // Calculate tree top position (from top of screen)
           const treeTopY = gameHeight - groundHeight - treeHeight;
