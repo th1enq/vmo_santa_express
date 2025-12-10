@@ -13,19 +13,31 @@
   justify-content: center;
   z-index: 20000;
   animation: fadeIn 0.5s ease-in;
+  overflow: hidden;
 }
 
-/* Desktop: match game container size */
-@media (min-width: 801px) {
-  .loading-screen {
-    max-width: 800px;
-    height: 70vh;
-    margin: 0 auto;
-    margin-top: calc((100vh - 70vh) / 2);
-    left: 50%;
-    transform: translateX(-50%);
-    border: 3px solid #333;
-    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+.snowflakes {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  top: 0;
+  left: 0;
+}
+
+.snowflake {
+  position: absolute;
+  top: -10%;
+  color: white;
+  font-size: calc(20px * var(--game-scale, 1));
+  animation: fall linear infinite;
+  opacity: 0.8;
+}
+
+@keyframes fall {
+  to {
+    transform: translateY(110vh);
   }
 }
 
@@ -42,7 +54,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 30px;
+  gap: calc(30px * var(--game-scale, 1));
   animation: slideUp 0.8s ease-out;
 }
 
@@ -58,11 +70,11 @@
 }
 
 .game-title-logo {
-  max-width: 600px;
+  max-width: calc(600px * var(--game-scale, 1));
   width: 80%;
   height: auto;
   image-rendering: -webkit-optimize-contrast;
-  filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.4));
+  filter: drop-shadow(0 calc(5px * var(--game-scale, 1)) calc(15px * var(--game-scale, 1)) rgba(0, 0, 0, 0.4));
   animation: pulse 2s ease-in-out infinite;
 }
 
@@ -76,14 +88,14 @@
 }
 
 .santa-circle {
-  width: 200px;
-  height: 200px;
+  width: calc(200px * var(--game-scale, 1));
+  height: calc(200px * var(--game-scale, 1));
   border-radius: 50%;
-  background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
-  border: 8px solid white;
+  background: white;
+  border: calc(8px * var(--game-scale, 1)) solid white;
   box-shadow: 
-    0 10px 40px rgba(0, 0, 0, 0.3),
-    0 0 60px rgba(74, 222, 128, 0.4);
+    0 calc(10px * var(--game-scale, 1)) calc(40px * var(--game-scale, 1)) rgba(0, 0, 0, 0.3),
+    0 0 calc(60px * var(--game-scale, 1)) rgba(255, 255, 255, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -97,7 +109,7 @@
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-20px);
+    transform: translateY(calc(-20px * var(--game-scale, 1)));
   }
 }
 
@@ -144,22 +156,22 @@
 }
 
 .loading-bar-container {
-  width: 400px;
+  width: calc(400px * var(--game-scale, 1));
   max-width: 80vw;
-  height: 30px;
+  height: calc(30px * var(--game-scale, 1));
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 15px;
+  border-radius: calc(15px * var(--game-scale, 1));
   overflow: hidden;
-  border: 3px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  border: calc(3px * var(--game-scale, 1)) solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 calc(4px * var(--game-scale, 1)) calc(15px * var(--game-scale, 1)) rgba(0, 0, 0, 0.2);
 }
 
 .loading-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 50%, #f97316 100%);
-  border-radius: 12px;
+  background: linear-gradient(90deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%);
+  border-radius: calc(12px * var(--game-scale, 1));
   transition: width 0.3s ease-out;
-  box-shadow: 0 0 15px rgba(251, 191, 36, 0.6);
+  box-shadow: 0 0 calc(15px * var(--game-scale, 1)) rgba(220, 38, 38, 0.6);
   position: relative;
   overflow: hidden;
 }
@@ -189,60 +201,49 @@
   }
 }
 
-.loading-text {
-  font-family: 'Arial', sans-serif;
-  font-size: 24px;
-  font-weight: bold;
-  color: white;
-  text-shadow: 
-    2px 2px 4px rgba(0, 0, 0, 0.5),
-    0 0 10px rgba(255, 255, 255, 0.3);
-  letter-spacing: 2px;
-}
-
-/* Responsive design */
+/* Responsive design - now handled by CSS variables */
 @media (max-width: 768px) {
   .santa-circle {
-    width: 150px;
-    height: 150px;
-    border: 6px solid white;
+    width: calc(150px * var(--game-scale, 1));
+    height: calc(150px * var(--game-scale, 1));
+    border: calc(6px * var(--game-scale, 1)) solid white;
   }
 
   .game-title-logo {
-    max-width: 350px;
+    max-width: calc(350px * var(--game-scale, 1));
   }
 
   .loading-bar-container {
-    width: 300px;
-    height: 25px;
+    width: calc(300px * var(--game-scale, 1));
+    height: calc(25px * var(--game-scale, 1));
   }
 
   .loading-text {
-    font-size: 20px;
+    font-size: calc(20px * var(--game-scale, 1));
   }
 }
 
 @media (max-width: 480px) {
   .santa-circle {
-    width: 120px;
-    height: 120px;
-    border: 5px solid white;
+    width: calc(120px * var(--game-scale, 1));
+    height: calc(120px * var(--game-scale, 1));
+    border: calc(5px * var(--game-scale, 1)) solid white;
   }
 
   .game-title-logo {
-    max-width: 280px;
+    max-width: calc(280px * var(--game-scale, 1));
   }
 
   .loading-bar-container {
-    width: 250px;
-    height: 20px;
+    width: calc(250px * var(--game-scale, 1));
+    height: calc(20px * var(--game-scale, 1));
   }
 
   .loading-text {
-    font-size: 18px;
+    font-size: calc(18px * var(--game-scale, 1));
   }
 
   .loading-content {
-    gap: 20px;
+    gap: calc(20px * var(--game-scale, 1));
   }
 }

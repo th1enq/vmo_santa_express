@@ -1,0 +1,137 @@
+@keyframes lb-pop {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.leaderboard-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 40000;
+  pointer-events: auto;
+}
+
+.leaderboard-card {
+  position: relative;
+  width: min(92vw, 380px);
+  aspect-ratio: 4 / 3;
+  background: url('/assets/window1.png'), url('/assets/window1.png');
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding: 34px 34px 30px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-top: -16px; /* lift the board slightly upward */
+  animation: lb-pop 160ms ease-out;
+  color: #5c1a1a;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.leaderboard-title {
+  width: 130%;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.25));
+  margin-top: -20%;
+}
+
+.leaderboard-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  margin-top: -100px;
+}
+
+.leaderboard-row {
+  width: 90%;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 0.7fr 1.6fr 1.1fr; /* cup | id | score */
+  align-items: center;
+  justify-items: center;
+  background: transparent;
+  border-radius: 0;
+  padding: 8px 12px;
+  box-shadow: none;
+}
+
+.lb-rank {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.lb-rank img {
+  width: 30px;
+  height: auto;
+  object-fit: contain;
+}
+
+.lb-id {
+  display: inline-flex;
+  flex-wrap: wrap;
+}
+
+.lb-score {
+  text-align: center;
+  display: inline-flex;
+  justify-content: center;
+}
+
+.leaderboard-empty {
+  padding: 18px 12px;
+  text-align: center;
+  font-weight: 600;
+  color: #8a4c4c;
+}
+
+.bitmap-text {
+  display: inline-flex;
+  gap: 2px;
+  line-height: 1;
+  transform: scale(2.2);
+  transform-origin: left center;
+}
+
+.bitmap-char {
+  width: 8px;
+  height: 8px;
+  background-image: url('/assets/geebeeyay-8x8.png');
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  background-size: auto 8px;
+}
+
+@media (max-width: 600px) {
+  .leaderboard-card {
+    width: min(70vw, 320px);
+    padding: 20px;
+    margin-top: -20px; /* keep board higher on small screens */
+  }
+
+  .leaderboard-title {
+    /* Match desktop proportions so layout stays centered */
+    width: 130%;
+    margin-top: 0%;
+    margin-bottom: -30px; /* Reduce gap between title and rows */
+  }
+
+  .leaderboard-row {
+    padding: 9px 10px;
+    grid-template-columns: 0.7fr 1.5fr 1fr;
+  }
+
+  .leaderboard-list {
+    margin-top: -40px; /* Pull rows up closer to title */
+    gap: 10px;
+  }
+}

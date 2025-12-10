@@ -4,25 +4,39 @@
   left: 0;
   width: 100%;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.85);
+  background-image: url('/assets/bg_loading.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10000;
-  backdrop-filter: blur(5px);
+  overflow: hidden;
 }
 
-/* Desktop: match game container size */
-@media (min-width: 801px) {
-  .enter-id-overlay {
-    max-width: 800px;
-    height: 70vh;
-    margin: 0 auto;
-    margin-top: calc((100vh - 70vh) / 2);
-    left: 50%;
-    transform: translateX(-50%);
-    border: 3px solid #333;
-    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+.snowflakes {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  top: 0;
+  left: 0;
+}
+
+.snowflake {
+  position: absolute;
+  top: -10%;
+  color: white;
+  font-size: calc(20px * var(--game-scale, 1));
+  animation: fall linear infinite;
+  opacity: 0.8;
+}
+
+@keyframes fall {
+  to {
+    transform: translateY(110vh);
   }
 }
 
@@ -32,146 +46,147 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 20px;
+  gap: calc(20px * var(--game-scale, 1));
+  width: 100%;
+  height: 100%;
 }
 
-/* Hidden input for mobile keyboard */
-.hidden-input {
-  position: absolute;
-  opacity: 0;
-  width: 1px;
-  height: 1px;
-  border: none;
-  padding: 0;
-  margin: 0;
-  pointer-events: none;
-  /* Keep it in the DOM but invisible */
-  z-index: -1;
-}
-
-@media (min-width: 768px) {
-  .enter-id-container {
-    transform: scale(0.5);
-  }
-}
-
-@media (max-width: 767px) {
-  .enter-id-container {
-    transform: scale(1.5);
-  }
-}
-
-.bitmap-text-container {
+.enter-id-content {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 40px;
-  width: 1095px;
-  height: 1335px;
-  background-image: url('/assets/window.png');
+  gap: calc(30px * var(--game-scale, 1));
+  width: 95%;
+  max-width: 95%;
+  height: 95%;
+  max-height: 95%;
+  aspect-ratio: 1095 / 1335;
+  background-image: url('/assets/window2.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-  image-rendering: pixelated;
-  padding: 200px 150px;
+  padding: 12% 8%;
+  box-sizing: border-box;
 }
 
-.bitmap-line {
+.vmo-id-label {
+  /* Image dimensions: 2816x1536, maintain aspect ratio */
+  width: calc(400px * var(--game-scale, 1));
+  max-width: min(80vw, calc(400px * var(--game-scale, 1)));
+  height: auto;
+  aspect-ratio: 2816 / 1536;
+  object-fit: contain;
+  image-rendering: auto;
+  display: block;
+  filter: drop-shadow(0 calc(2px * var(--game-scale, 1)) calc(4px * var(--game-scale, 1)) rgba(0, 0, 0, 0.3));
+}
+
+.input-boxes-container {
   display: flex;
-  gap: 2px;
-  line-height: 8px;
-  height: 8px;
-}
-
-.bitmap-char {
-  image-rendering: pixelated;
-  image-rendering: -moz-crisp-edges;
-  image-rendering: crisp-edges;
-  position: relative;
-}
-
-.bitmap-char::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: inherit;
-  background-position: inherit;
-  mix-blend-mode: multiply;
-}
-
-.bitmap-input-line {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 15px 25px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 2px dashed rgba(255, 255, 255, 0.5);
-  border-radius: 10px;
-  min-height: 28px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.bitmap-input-line:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.8);
-}
-
-.bitmap-input-line:active {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-.bitmap-input-display {
-  display: flex;
-  gap: 2px;
+  gap: calc(15px * var(--game-scale, 1));
   align-items: center;
   justify-content: center;
-  min-width: 60px;
+  flex-wrap: nowrap;
 }
 
-.bitmap-cursor {
-  animation: blink 1s step-start infinite;
+.input-box {
+  width: calc(80px * var(--game-scale, 1));
+  height: calc(80px * var(--game-scale, 1));
+  border: calc(3px * var(--game-scale, 1)) solid rgba(0, 0, 0, 0.3);
+  border-radius: calc(8px * var(--game-scale, 1));
+  background: white;
+  color: #000000 !important;
+  font-size: calc(48px * var(--game-scale, 1));
+  font-weight: bold;
+  text-align: center;
+  outline: none;
+  transition: all 0.3s ease;
+  font-family: 'Arial', sans-serif;
+  box-shadow: 
+    0 calc(4px * var(--game-scale, 1)) calc(8px * var(--game-scale, 1)) rgba(0, 0, 0, 0.2),
+    inset 0 calc(2px * var(--game-scale, 1)) calc(4px * var(--game-scale, 1)) rgba(0, 0, 0, 0.1);
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+  caret-color: #000000;
 }
 
-@keyframes blink {
-  50% {
-    opacity: 0;
-  }
+.input-box::placeholder {
+  color: transparent;
 }
 
-.bitmap-button-hints {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: center;
-  margin-top: 10px;
+/* Remove spinner arrows on number inputs */
+.input-box::-webkit-outer-spin-button,
+.input-box::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
-.confirm-button {
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.confirm-button:hover {
-  opacity: 0.8;
+.input-box:focus {
+  border-color: rgba(74, 222, 128, 0.8);
+  background: white;
+  color: black;
+  box-shadow: 
+    0 calc(6px * var(--game-scale, 1)) calc(12px * var(--game-scale, 1)) rgba(74, 222, 128, 0.4),
+    inset 0 calc(2px * var(--game-scale, 1)) calc(4px * var(--game-scale, 1)) rgba(0, 0, 0, 0.1);
   transform: scale(1.05);
 }
 
-.confirm-button:active {
-  opacity: 0.6;
-  transform: scale(0.98);
+.input-box.input-error {
+  border-color: #dc2626;
+  background: rgba(220, 38, 38, 0.2);
+  animation: shake 0.5s ease-in-out;
+  box-shadow: 
+    0 calc(6px * var(--game-scale, 1)) calc(12px * var(--game-scale, 1)) rgba(220, 38, 38, 0.5),
+    inset 0 calc(2px * var(--game-scale, 1)) calc(4px * var(--game-scale, 1)) rgba(0, 0, 0, 0.2);
 }
 
-.warning-text {
-  opacity: 1;
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(calc(-5px * var(--game-scale, 1))); }
+  75% { transform: translateX(calc(5px * var(--game-scale, 1))); }
+}
+
+.resume-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: calc(10px * var(--game-scale, 1));
+}
+
+.resume-button img {
+  width: calc(200px * var(--game-scale, 1));
+  max-width: min(40vw, calc(200px * var(--game-scale, 1)));
+  height: auto;
+  image-rendering: auto;
+  filter: drop-shadow(0 calc(4px * var(--game-scale, 1)) calc(8px * var(--game-scale, 1)) rgba(0, 0, 0, 0.3));
+}
+
+.resume-button:hover {
+  transform: scale(1.1);
+  filter: drop-shadow(0 calc(8px * var(--game-scale, 1)) calc(16px * var(--game-scale, 1)) rgba(255, 165, 0, 0.6)) brightness(1.2);
+}
+
+.resume-button:active {
+  transform: scale(0.95);
+  filter: drop-shadow(0 calc(2px * var(--game-scale, 1)) calc(4px * var(--game-scale, 1)) rgba(0, 0, 0, 0.5));
+}
+
+.warning-message {
+  color: #dc2626;
+  font-size: calc(24px * var(--game-scale, 1));
+  font-weight: bold;
+  text-align: center;
+  font-family: 'Arial', sans-serif;
+  text-shadow: 
+    calc(1px * var(--game-scale, 1)) calc(1px * var(--game-scale, 1)) calc(2px * var(--game-scale, 1)) rgba(0, 0, 0, 0.8);
   animation: flash 0.5s ease-in-out 3;
+  margin-top: calc(10px * var(--game-scale, 1));
 }
 
 @keyframes flash {
@@ -179,45 +194,13 @@
   50% { opacity: 0.3; }
 }
 
-/* Scale up for better visibility */
-@media (min-width: 768px) {
-  .bitmap-char {
-    transform: scale(6);
-    transform-origin: top left;
-    margin-right: 40px;
-    margin-bottom: 40px;
-  }
-  
-  .bitmap-line {
-    gap: 4px;
-    height: 48px;
-  }
-  
-  .bitmap-input-display {
-    min-width: 400px;
-  }
-}
-
+/* Mobile adjustments */
 @media (max-width: 767px) {
-  .bitmap-char {
-    transform: scale(1.5);
-    transform-origin: top left;
-  }
-  
-  .bitmap-line {
-    gap: 2px;
-    height: 16px;
-  }
-  
-  .bitmap-input-display {
-    min-width: 150px;
-  }
-  
-  .bitmap-text-container {
-    width: auto;
-    height: auto;
-    max-width: 90vw;
-    max-height: 90vh;
-    padding: 60px 40px;
+  .enter-id-content {
+    width: 98%;
+    max-width: 98%;
+    height: 98%;
+    max-height: 98%;
+    padding: 10% 6%;
   }
 }

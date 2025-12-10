@@ -14,7 +14,7 @@
     transform: translateY(0) translateZ(0);
   }
   50% {
-    transform: translateY(-20px) translateZ(0);
+    transform: translateY(calc(-20px * var(--scale, 1))) translateZ(0);
   }
 }
 

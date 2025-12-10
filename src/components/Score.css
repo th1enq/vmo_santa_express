@@ -7,92 +7,49 @@
   pointer-events: none;
 }
 
+.score-container.game-over-active {
+  pointer-events: auto;
+}
+
 .start-message {
   text-align: center;
   margin-top: 20vh;
   color: white;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  text-shadow: calc(2px * var(--scale, 1)) calc(2px * var(--scale, 1)) calc(4px * var(--scale, 1)) rgba(0, 0, 0, 0.5);
 }
 
-.start-message h1 {
-  font-size: 3rem;
-  margin-bottom: 20px;
+.start-message .start-title {
+  width: calc(400px * var(--scale, 1));
+  max-width: 80vw;
+  height: auto;
+  display: block;
+  margin: 0 auto calc(20px * var(--scale, 1));
+  object-fit: contain;
   animation: bounce 2s ease-in-out infinite;
 }
 
 .start-message p {
-  font-size: 1.5rem;
+  font-size: calc(1.5rem * var(--scale, 1));
   animation: pulse 1.5s ease-in-out infinite;
 }
 
 .current-score {
   text-align: center;
-  margin-top: 30px;
+  margin-top: calc(30px * var(--scale, 1));
   display: flex;
   justify-content: center;
 }
 
 .number-display {
   display: flex;
-  gap: 8px;
+  gap: calc(8px * var(--scale, 1));
   align-items: center;
 }
 
 .digit-image {
-  height: 60px;
+  height: calc(60px * var(--scale, 1));
   width: auto;
-  filter: drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.5));
-}
-
-.game-over {
-  text-align: center;
-  margin-top: 25vh;
-  background: rgba(0, 0, 0, 0.7);
-  padding: 40px;
-  border-radius: 20px;
-  color: white;
-  max-width: 400px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.game-over h2 {
-  font-size: 3rem;
-  margin-bottom: 20px;
-  color: #ff6b6b;
-}
-
-.final-score {
-  font-size: 1.5rem;
-  margin: 15px 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-
-.final-score .number-display .digit-image {
-  height: 40px;
-}
-
-.high-score {
-  font-size: 1.2rem;
-  margin: 10px 0;
-  color: #ffd93d;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-
-.high-score .number-display .digit-image {
-  height: 35px;
-}
-
-.restart-message {
-  font-size: 1.2rem;
-  margin-top: 20px;
-  animation: pulse 1.5s ease-in-out infinite;
+  filter: drop-shadow(calc(3px * var(--scale, 1)) calc(3px * var(--scale, 1)) calc(6px * var(--scale, 1)) rgba(0, 0, 0, 0.5));
 }
 
 @keyframes bounce {
@@ -100,7 +57,7 @@
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-20px);
+    transform: translateY(calc(-20px * var(--scale, 1)));
   }
 }
 
@@ -113,42 +70,131 @@
   }
 }
 
-@media (max-width: 768px) {
-  .start-message h1 {
-    font-size: 2rem;
-  }
-  
-  .start-message p {
-    font-size: 1rem;
-  }
-  
-  .current-score {
-    margin-top: 20px;
-  }
+.game-over-overlay {
+  display: flex;
+  justify-content: center;
+  margin-top: calc(8vh + 10px * var(--scale, 1));
+  z-index: 200;
+}
 
-  .digit-image {
-    height: 50px;
+.game-over-card {
+  position: relative;
+  width: min(92vw, calc(330px * var(--scale, 1)));
+  aspect-ratio: 4 / 3;
+  background: url('/assets/window1.png') center / 100% 100% no-repeat;
+  padding: calc(52px * var(--scale, 1)) calc(40px * var(--scale, 1));
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(14px * var(--scale, 1));
+  color: #5c1a1a;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.game-over-title {
+  width: min(135%, calc(520px * var(--scale, 1)));
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.25));
+}
+
+.game-over-scores {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: calc(10px * var(--scale, 1));
+  align-items: center;
+  transform: translateY(calc(-50px * var(--scale, 1)));
+}
+
+.score-row {
+  display: flex;
+  align-items: center;
+  gap: calc(12px * var(--scale, 1));
+}
+
+.score-row .score-label {
+  height: calc(34px * var(--scale, 1));
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.score-row .number-display {
+  gap: calc(6px * var(--scale, 1));
+}
+
+.score-row .digit-image {
+  height: calc(42px * var(--scale, 1));
+  filter: drop-shadow(calc(2px * var(--scale, 1)) calc(2px * var(--scale, 1)) calc(4px * var(--scale, 1)) rgba(0, 0, 0, 0.35));
+}
+
+.game-over-actions {
+  display: flex;
+  flex-direction: column;
+  gap: calc(14px * var(--scale, 1));
+  align-items: center;
+  pointer-events: auto;
+}
+
+.game-over-btn {
+  width: min(70%, calc(280px * var(--scale, 1)));
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  position: relative;
+  pointer-events: auto;
+  touch-action: manipulation;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.game-over-btn img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.3));
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.game-over-btn:hover img,
+.game-over-btn:focus-visible img {
+  transform: translateY(calc(-3px * var(--scale, 1))) scale(1.04);
+  filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.35)) brightness(1.05);
+}
+
+.game-over-btn:active img {
+  transform: translateY(calc(1px * var(--scale, 1))) scale(0.98);
+}
+
+@media (max-width: 600px) {
+  .game-over-card {
+    padding: calc(44px * var(--scale, 1)) calc(28px * var(--scale, 1));
+    gap: calc(12px * var(--scale, 1));
+    top: 20%;
   }
   
-  .game-over {
-    padding: 30px 20px;
-    max-width: 90%;
-    margin-top: 20vh;
+  .game-over-title {
+    width: 120%;
   }
   
-  .game-over h2 {
-    font-size: 2rem;
+  .score-row {
+    gap: calc(10px * var(--scale, 1));
   }
   
-  .final-score {
-    font-size: 1.5rem;
+  .score-row .score-label {
+    height: calc(30px * var(--scale, 1));
   }
   
-  .high-score {
-    font-size: 1.2rem;
+  .score-row .digit-image {
+    height: calc(36px * var(--scale, 1));
   }
   
-  .restart-message {
-    font-size: 1rem;
+  .game-over-btn {
+    width: min(78%, calc(260px * var(--scale, 1)));
   }
 }
+
+/* Mobile styles removed - now handled by CSS variables */

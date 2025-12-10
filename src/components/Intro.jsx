@@ -1,39 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import './Intro.css';
-
-// Preload Christmas tree images
-const preloadTreeImages = () => {
-  const treeTypes = [
-    { path: 'CHRISTMAS TREE SMALL - FANTASY', name: 'Christmas Tree Small Fantasy', frames: 127 },
-    { path: 'CHRISTMAS TREE MEDIUM - GREEN', name: 'Christmas Tree Medium Green', frames: 119 },
-    { path: 'CHRISTMAS TREE SMALL- GREEN TEAL', name: 'Christmas Tree Small Green Teal', frames: 127 }
-  ];
-
-  treeTypes.forEach(tree => {
-    // Preload every 10th frame to reduce initial load
-    for (let i = 0; i < tree.frames; i += 10) {
-      const frameNumber = String(i).padStart(3, '0');
-      const img = new Image();
-      img.src = `/assets/${tree.path}/${tree.name}_${frameNumber}.png`;
-    }
-  });
-};
 
 const SCRIPTS = [
   {
     id: 1,
     sprite: 'santa_popup',
-    text: "Ho ho ho… Merry Christmas!\n\nI'm all set to deliver gifts to the VMO family.\n\nCome along with me!"
+    text: "Ho Ho Ho! Hey there, VMOers! 🎅 I'm on my way with a sleigh full of gifts for you! 🎁"
   },
   {
     id: 2,
     sprite: 'santa_popup',
-    text: "This is exciting! The Christmas spirit is stronger than ever!\n\nLet's spread joy to everyone at VMO!"
-  },
-  {
-    id: 3,
-    sprite: 'santa_popup',
-    text: "Uh-oh… The path ahead looks tough.\n\nI need your help to get these gifts safely to the VMO team!"
+    text: "But oh dear, the sky is full of giant candy canes! Help me fly through them to deliver your presents on time.\n\nReady to save Christmas? Let's fly!"
   }
 ];
 
@@ -41,14 +18,16 @@ const Intro = ({ onComplete }) => {
   const [currentScript, setCurrentScript] = useState(0);
   const [displayedText, setDisplayedText] = useState('');
   const [charIndex, setCharIndex] = useState(0);
+  const snowflakes = useMemo(() => (
+    [...Array(50)].map(() => ({
+      left: `${Math.random() * 100}%`,
+      delay: `${Math.random() * 5}s`,
+      duration: `${8 + Math.random() * 6}s`,
+    }))
+  ), []);
 
   const script = SCRIPTS[currentScript];
   const fullText = script.text;
-
-  // Preload tree images on mount
-  useEffect(() => {
-    preloadTreeImages();
-  }, []);
 
   // Typing animation
   useEffect(() => {
@@ -87,49 +66,34 @@ const Intro = ({ onComplete }) => {
 
   return (
     <div className="intro-container" onClick={handleNext}>
-      <div className="intro-background">
-        {/* Snowflakes effect */}
-        <div className="snowflakes">
-          {[...Array(50)].map((_, i) => (
-            <div key={i} className="snowflake" style={{
-              left: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 5}s`,
-              animationDuration: `${5 + Math.random() * 10}s`
-            }}>❄</div>
+      <div className="snowflakes">
+        {snowflakes.map((flake, i) => (
+          <div key={i} className="snowflake" style={{
+            left: flake.left,
+            animationDelay: flake.delay,
+            animationDuration: flake.duration,
+          }}>❄</div>
+        ))}
+      </div>
+
+      <div className="intro-card" onClick={handleNext}>
+        <img src="/assets/santa_popup.png" alt="Santa" className="intro-santa" />
+        <img src="/assets/dialog.png" alt="Dialog" className="dialog-bubble" />
+        <div className="dialog-text-box">
+          {displayedText.split('\n').map((line, i) => (
+            <React.Fragment key={i}>
+              {line}
+              {i < displayedText.split('\n').length - 1 && <br />}
+            </React.Fragment>
           ))}
-        </div>
-        
-        <div className="intro-content">
-          <div className="santa-portrait">
-            <img 
-              src={`/assets/${script.sprite}.png`}
-              alt="Santa"
-              className="santa-image"
-            />
-            
-            {/* Dialog bubble above Santa */}
-            <div className="dialog-bubble">
-              <img src="/assets/dialog.png" alt="" className="dialog-bg" />
-              <div className="dialog-content">
-                <div className="dialog-text">
-                  {displayedText.split('\n').map((line, i) => (
-                    <React.Fragment key={i}>
-                      {line}
-                      {i < displayedText.split('\n').length - 1 && <br />}
-                    </React.Fragment>
-                  ))}
-                  {charIndex < fullText.length && <span className="cursor">▋</span>}
-                </div>
-              </div>
-            </div>
-          </div>
+          {charIndex < fullText.length && <span className="cursor">▋</span>}
         </div>
 
         <button className="skip-button" onClick={(e) => {
           e.stopPropagation();
           handleSkip();
         }}>
-          Skip Intro ⏭
+          <img src="/assets/skip.png" alt="Skip" />
         </button>
       </div>
     </div>

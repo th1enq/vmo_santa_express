@@ -49,7 +49,7 @@ const Gift = React.memo(({ giftX, giftY, spriteIndex, isBreaking }) => {
           objectPosition: `-${offsetX}px -${offsetY}px`,
           width: '2048px',
           height: '2048px',
-          transform: 'scale(0.12)',
+          transform: `scale(calc(0.12 * var(--scale, 1)))`,
           transformOrigin: 'top left',
         }}
       />

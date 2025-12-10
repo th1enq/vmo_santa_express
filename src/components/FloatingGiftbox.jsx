@@ -1,7 +1,7 @@
 import React from 'react';
 import './FloatingGiftbox.css';
 
-const FloatingGiftbox = React.memo(({ x, y, showHitbox }) => {
+const FloatingGiftbox = React.memo(({ x, y }) => {
   return (
     <div
       className="floating-giftbox"
@@ -14,25 +14,11 @@ const FloatingGiftbox = React.memo(({ x, y, showHitbox }) => {
         src="/assets/Giftbox-1.png"
         alt="floating giftbox"
         style={{
-          width: '60px',
+          width: `calc(60px * var(--scale, 1))`,
           height: 'auto',
           imageRendering: 'auto',
         }}
       />
-      {showHitbox && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '60px',
-            height: '60px',
-            border: '2px solid yellow',
-            backgroundColor: 'rgba(255, 255, 0, 0.2)',
-            pointerEvents: 'none',
-          }}
-        />
-      )}
     </div>
   );
 });

@@ -2,8 +2,8 @@
   position: absolute;
   left: 0;
   top: 0;
-  width: 60px;
-  height: 60px;
+  width: calc(60px * var(--scale, 1));
+  height: calc(60px * var(--scale, 1));
   z-index: 8;
   overflow: hidden;
   display: flex;
@@ -27,7 +27,7 @@
 
 @keyframes gift-fall {
   from {
-    transform: translateY(-20px) rotate(0deg);
+    transform: translateY(calc(-20px * var(--scale, 1))) rotate(0deg);
     opacity: 0;
   }
   to {
@@ -47,13 +47,4 @@
   }
 }
 
-@media (max-width: 768px) {
-  .gift {
-    width: 50px;
-    height: 50px;
-  }
-  
-  .gift img {
-    transform: scale(0.10) !important;
-  }
-}
+/* Mobile styles removed - now handled by CSS variables */

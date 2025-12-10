@@ -12,6 +12,7 @@ import MainMenu from './components/MainMenu';
 import FloatingGiftbox from './components/FloatingGiftbox';
 import EnterID from './components/EnterID';
 import LoadingScreen from './components/LoadingScreen';
+import LeaderboardOverlay from './components/LeaderboardOverlay';
 import './App.css';
 
 // Audio files
@@ -36,17 +37,19 @@ bgMusic.loop = true;
 
 const GRAVITY = 0.5;
 const JUMP_STRENGTH = -8;
-const PIPE_WIDTH = 90;
-const PIPE_GAP_DESKTOP = 280;
-const PIPE_GAP_MOBILE = 240; // Slightly harder on mobile
+// Base dimensions (reference size: 500x750)
+const BASE_PIPE_WIDTH = 90;
+// Gap between pipes (scaled proportionally for all devices)
+// Reduced for higher difficulty - gap is ~26.7% of reference height (200/750)
+const BASE_PIPE_GAP = 200; // Reduced from 280 for harder gameplay
 const PIPE_SPEED = 3;
-const SANTA_SIZE = 100;
-const SANTA_HITBOX_PADDING = 20; // Reduce hitbox by 20px on each side
+const BASE_SANTA_SIZE = 100;
+const BASE_SANTA_HITBOX_PADDING = 20; // Reduce hitbox by 20px on each side
 const GIFT_DROP_INTERVAL = 3000; // Drop gift every 3 seconds
 const GIFT_DROP_INTERVAL_MOBILE = 5000; // Drop gift every 5 seconds on mobile (less frequent)
 const GIFT_FALL_SPEED = 2;
 const GIFT_GRAVITY = 0.3;
-const GIFT_SIZE = 60;
+const BASE_GIFT_SIZE = 60;
 
 // Detect mobile device
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth <= 768;
@@ -59,7 +62,14 @@ function App() {
   const [vmoId, setVmoId] = useState('');
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showCredits, setShowCredits] = useState(false);
-  const [santaY, setSantaY] = useState(300);
+  // Reference dimensions for scaling (base game size)
+  const REFERENCE_WIDTH = 500;
+  const REFERENCE_HEIGHT = 750;
+  const [gameWidth, setGameWidth] = useState(REFERENCE_WIDTH);
+  const [gameHeight, setGameHeight] = useState(REFERENCE_HEIGHT);
+  // Calculate initial Santa Y position (40% from top of reference height)
+  const initialSantaY = REFERENCE_HEIGHT * 0.4;
+  const [santaY, setSantaY] = useState(initialSantaY);
   const [santaVelocity, setSantaVelocity] = useState(0);
   const [rotation, setRotation] = useState(0);
   const [pipes, setPipes] = useState([]);
@@ -72,14 +82,15 @@ function App() {
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [isDead, setIsDead] = useState(false);
-  // Fixed game dimensions to prevent layout issues across devices
-  const FIXED_GAME_WIDTH = 500;
-  const FIXED_GAME_HEIGHT = 750;
-  const [gameWidth, setGameWidth] = useState(FIXED_GAME_WIDTH);
-  const [gameHeight, setGameHeight] = useState(FIXED_GAME_HEIGHT);
-  const [showHitbox, setShowHitbox] = useState(false);
-  const [pipeGap, setPipeGap] = useState(PIPE_GAP_DESKTOP);
+  const [pipeGap, setPipeGap] = useState(BASE_PIPE_GAP);
   const [enableSmoke, setEnableSmoke] = useState(!isMobile); // Disable smoke on mobile for performance
+  const [leaderboard, setLeaderboard] = useState([]);
+  const hasRecordedScoreRef = useRef(false);
+  
+  // Calculate scale factors based on current game dimensions
+  const scaleX = gameWidth / REFERENCE_WIDTH;
+  const scaleY = gameHeight / REFERENCE_HEIGHT;
+  const scale = Math.min(scaleX, scaleY); // Use uniform scaling to maintain aspect ratio
   
   const gameLoopRef = useRef(null);
   const pipeTimerRef = useRef(null);
@@ -87,7 +98,7 @@ function App() {
   const decorTimerRef = useRef(null);
   const scoredPipesRef = useRef(new Set());
   const gameContainerRef = useRef(null);
-  const santaYRef = useRef(300);
+  const santaYRef = useRef(REFERENCE_HEIGHT * 0.4);
   const bgMusicRef = useRef(bgMusic);
 
   // Play sound helper function - creates new audio instance each time
@@ -103,15 +114,32 @@ function App() {
     santaYRef.current = santaY;
   }, [santaY]);
 
+  // Update initial Santa position when game dimensions change (only if game hasn't started)
+  useEffect(() => {
+    if (!gameStarted && !gameOver) {
+      const newInitialY = gameHeight * 0.4;
+      setSantaY(newInitialY);
+      santaYRef.current = newInitialY;
+    }
+  }, [gameHeight, gameStarted, gameOver]);
+
   // Load high score from localStorage
   useEffect(() => {
     const savedHighScore = localStorage.getItem('santaFlappyHighScore');
     if (savedHighScore) {
       setHighScore(parseInt(savedHighScore, 10));
     }
+    const savedBoard = localStorage.getItem('santaFlappyLeaderboard');
+    if (savedBoard) {
+      try {
+        setLeaderboard(JSON.parse(savedBoard));
+      } catch (e) {
+        console.warn('Failed to parse leaderboard:', e);
+      }
+    }
   }, []);
 
-  // Use fixed game dimensions for desktop, dynamic for mobile
+  // Update game dimensions responsively
   useEffect(() => {
     const updateDimensions = () => {
       if (isMobile || window.innerWidth <= 800) {
@@ -119,19 +147,34 @@ function App() {
         const screenHeight = window.innerHeight;
         setGameWidth(window.innerWidth);
         setGameHeight(screenHeight);
-        // Mobile: gap as percentage of screen height
-        // Desktop ratio: 200/750 = 26.7%, but mobile should be easier
-        // Use 18% for mobile (more forgiving)
-        const calculatedGap = Math.round(screenHeight * 0.25);
-        // Clamp gap between 120 and 200 to ensure playability
-        const finalGap = Math.max(120, Math.min(200, calculatedGap));
+        // Mobile: gap scales proportionally with screen height
+        // Gap ratio: BASE_PIPE_GAP / REFERENCE_HEIGHT = 200 / 750 = ~0.267 (26.7%)
+        const calculatedGap = Math.round(screenHeight * (BASE_PIPE_GAP / REFERENCE_HEIGHT));
+        // Clamp gap to ensure playability (minimum 100px, maximum 35% of screen height)
+        const finalGap = Math.max(100, Math.min(calculatedGap, screenHeight * 0.35));
         setPipeGap(finalGap);
       } else {
-        // Desktop: use fixed dimensions
-        setGameWidth(FIXED_GAME_WIDTH);
-        setGameHeight(FIXED_GAME_HEIGHT);
-        // Desktop: gap as percentage of fixed height (26.7% of 750 = 200)
-        setPipeGap(200);
+        // Desktop: maintain aspect ratio, scale to fit viewport
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const aspectRatio = REFERENCE_WIDTH / REFERENCE_HEIGHT;
+        
+        let newWidth, newHeight;
+        if (viewportWidth / viewportHeight > aspectRatio) {
+          // Viewport is wider, fit to height
+          newHeight = Math.min(viewportHeight * 0.9, REFERENCE_HEIGHT);
+          newWidth = newHeight * aspectRatio;
+        } else {
+          // Viewport is taller, fit to width
+          newWidth = Math.min(viewportWidth * 0.9, REFERENCE_WIDTH);
+          newHeight = newWidth / aspectRatio;
+        }
+        
+        setGameWidth(newWidth);
+        setGameHeight(newHeight);
+        // Desktop: gap scales proportionally with game height
+        // Gap ratio: BASE_PIPE_GAP / REFERENCE_HEIGHT = 200 / 750 = ~0.267 (26.7%)
+        setPipeGap(Math.round(newHeight * (BASE_PIPE_GAP / REFERENCE_HEIGHT)));
       }
     };
     
@@ -149,31 +192,55 @@ function App() {
     }
   }, [score, highScore]);
 
+  useEffect(() => {
+    if (gameOver && !hasRecordedScoreRef.current) {
+      const entry = {
+        id: Date.now(),
+        vmoId: vmoId || '----',
+        score
+      };
+      const merged = [...leaderboard, entry]
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 20);
+      setLeaderboard(merged);
+      localStorage.setItem('santaFlappyLeaderboard', JSON.stringify(merged));
+      hasRecordedScoreRef.current = true;
+    } else if (!gameOver) {
+      hasRecordedScoreRef.current = false;
+    }
+  }, [gameOver, score, vmoId, leaderboard]);
+
+  const resetGame = useCallback(() => {
+    playSound('swoosh');
+    setSantaY(gameHeight * 0.4);
+    setSantaVelocity(0);
+    setRotation(0);
+    setIsDead(false);
+    setPipes([]);
+    setGifts([]);
+    setSmokes([]);
+    setDecors([]);
+    setScore(0);
+    setGameOver(false);
+    setGameStarted(false);
+    setShowLeaderboard(false);
+    scoredPipesRef.current.clear();
+  }, [gameHeight, playSound]);
+
   const jump = useCallback(() => {
-    // Don't allow jumping when loading, intro, enter ID, or menu is showing
-    if (showLoading || showIntro || showEnterID || showMainMenu) {
+    // Don't allow jumping when loading, intro, or enter ID is showing
+    if (showLoading || showIntro || showEnterID || showLeaderboard || gameOver) {
       return;
     }
     
-    if (gameOver) {
-      // Restart game
-      playSound('swoosh');
-      setSantaY(300);
-      setSantaVelocity(0);
-      setRotation(0);
-      setIsDead(false);
-      setPipes([]);
-      setGifts([]);
-      setSmokes([]);
-      setDecors([]);
-      setScore(0);
-      setGameOver(false);
-      setGameStarted(false);
-      scoredPipesRef.current.clear();
-    } else if (!gameStarted) {
+    // Calculate scale for jump strength
+    const currentScale = Math.min(gameWidth / REFERENCE_WIDTH, gameHeight / REFERENCE_HEIGHT);
+    const scaledJumpStrength = JUMP_STRENGTH * currentScale;
+    
+    if (!gameStarted) {
       setGameStarted(true);
       playSound('wing');
-      setSantaVelocity(JUMP_STRENGTH);
+      setSantaVelocity(scaledJumpStrength);
       // Add smoke effect (disabled on mobile for performance)
       if (enableSmoke) {
         const santaLeft = gameWidth * 0.15;
@@ -187,7 +254,7 @@ function App() {
       }
     } else if (!isDead) {
       playSound('wing');
-      setSantaVelocity(JUMP_STRENGTH);
+      setSantaVelocity(scaledJumpStrength);
       // Add smoke effect (disabled on mobile for performance)
       if (enableSmoke) {
         const santaLeft = gameWidth * 0.15;
@@ -200,28 +267,33 @@ function App() {
         }]);
       }
     }
-  }, [gameOver, gameStarted, isDead, playSound, gameWidth, enableSmoke, showLoading, showIntro, showEnterID, showMainMenu]);
+  }, [gameOver, gameStarted, isDead, playSound, gameWidth, gameHeight, enableSmoke, showLoading, showIntro, showEnterID, showMainMenu]);
 
   // Handle keyboard and touch input
   useEffect(() => {
+    const isInteractiveTarget = (target) => {
+      if (!target) return false;
+      const closest = target.closest?.('.game-over-actions, .enter-id-container');
+      return Boolean(closest);
+    };
+
     const handleKeyPress = (e) => {
       if (e.code === 'Space') {
         e.preventDefault();
         jump();
       }
-      // Toggle hitbox visualization with 'D' key
-      if (e.code === 'KeyD') {
-        e.preventDefault();
-        setShowHitbox((prev) => !prev);
-      }
     };
 
     const handleTouch = (e) => {
+      if (gameOver || showLoading || showIntro || showEnterID || showLeaderboard) return;
+      if (isInteractiveTarget(e.target)) return;
       e.preventDefault();
       jump();
     };
 
     const handleClick = (e) => {
+      if (gameOver || showLoading || showIntro || showEnterID || showLeaderboard) return;
+      if (isInteractiveTarget(e.target)) return;
       // Only trigger jump if clicking on game container, not other elements
       if (e.target === gameContainerRef.current || 
           gameContainerRef.current?.contains(e.target)) {
@@ -234,7 +306,7 @@ function App() {
     // Add touch/click listeners to game container instead of window
     const container = gameContainerRef.current;
     if (container) {
-      container.addEventListener('touchstart', handleTouch);
+      container.addEventListener('touchstart', handleTouch, { passive: false });
       container.addEventListener('click', handleClick);
     }
 
@@ -245,37 +317,50 @@ function App() {
         container.removeEventListener('click', handleClick);
       }
     };
-  }, [jump]);
+  }, [jump, gameOver, showLoading, showIntro, showEnterID, showLeaderboard]);
 
   // Generate pipes
   useEffect(() => {
     if (gameStarted && !gameOver) {
-      // Use a ref to track last spawn time to ensure consistent spacing
-      let lastSpawnTime = Date.now();
-      const minSpawnInterval = 2000; // Minimum 2 seconds between spawns
-      
       const generatePipe = () => {
-        const now = Date.now();
-        
-        // Check time-based spawn interval
-        if (now - lastSpawnTime < minSpawnInterval) {
-          return;
-        }
+        // Calculate scale once for this function
+        const pipeScale = Math.min(gameWidth / REFERENCE_WIDTH, gameHeight / REFERENCE_HEIGHT);
         
         setPipes((prevPipes) => {
-          // Additional distance check - ensure last pipe has moved far enough from spawn point
-          const minDistance = 250; // Minimum distance from right edge
+          // Calculate scaled target distance between pipes (edge to edge)
+          const baseTargetDistance = 200; // Target distance between pipe edges for consistent spacing
+          const targetDistance = baseTargetDistance * pipeScale;
+          const basePipeWidth = BASE_PIPE_WIDTH * pipeScale;
           
           if (prevPipes.length > 0) {
             const lastPipe = prevPipes[prevPipes.length - 1];
-            // Check actual position - pipe should be at least minDistance away from right edge
-            if (lastPipe.x > gameWidth - minDistance) {
-              return prevPipes; // Don't spawn yet
-            }
+            // Check actual position - ensure consistent distance between pipe edges
+            // Last pipe right edge is at lastPipe.x + basePipeWidth
+            // New pipe left edge will be at gameWidth
+            // Distance between edges = gameWidth - (lastPipe.x + basePipeWidth)
+            const lastPipeRightEdge = lastPipe.x + basePipeWidth;
+            const distanceBetweenEdges = gameWidth - lastPipeRightEdge;
+            
+            // Spawn when distance reaches target (with tolerance for timing)
+            // This ensures consistent spacing regardless of game loop timing
+            const minDistance = targetDistance - (20 * pipeScale); // Allow small variation
+            const maxDistance = targetDistance + (30 * pipeScale); // Prevent huge gaps
+            
+            if (distanceBetweenEdges < minDistance) {
+              return prevPipes; // Too close, don't spawn yet
           }
           
-          // Update spawn time
-          lastSpawnTime = now;
+            // If distance is too large, spawn immediately to prevent huge gaps
+            // This handles cases where game loop was slow or frame rate dropped
+            if (distanceBetweenEdges > maxDistance) {
+              // Spawn immediately - distance is already too large
+              // Continue to create new pipe below
+            } else if (distanceBetweenEdges < targetDistance) {
+              // Not quite at target yet, wait a bit more
+              return prevPipes;
+            }
+            // Distance is at or near target, spawn new pipe
+          }
           
           // Random tree properties first
           const types = ['fantasy', 'green', 'greenTeal'];
@@ -285,10 +370,10 @@ function App() {
           const sizes = ['small', 'medium', 'large'];
           const treeSize = sizes[Math.floor(Math.random() * sizes.length)];
           
-          // Tree heights based on size - wider range for more variation
-          const treeHeights = { small: 200, medium: 300, large: 400 };
-          const treeHeight = treeHeights[treeSize];
-          const groundHeight = 80;
+          // Tree heights based on size - wider range for more variation (scaled)
+          const baseTreeHeights = { small: 200, medium: 300, large: 400 };
+          const treeHeight = baseTreeHeights[treeSize] * pipeScale;
+          const pipeGroundHeight = 80 * pipeScale;
           
           // Use dynamic gap from state instead of fixed value
           const currentGap = pipeGap;
@@ -296,7 +381,7 @@ function App() {
           // Calculate tree top position (from top of screen)
           // Use current gameHeight to ensure proper calculations
           const currentGameHeight = gameHeight;
-          const treeTopY = currentGameHeight - groundHeight - treeHeight;
+          const treeTopY = currentGameHeight - pipeGroundHeight - treeHeight;
           
           // Pipe top height = tree top - gap
           // This ensures gap is always exactly currentGap regardless of tree size
@@ -321,11 +406,12 @@ function App() {
         });
       };
 
-      // Generate first pipe after a delay
-      const firstPipeTimeout = setTimeout(generatePipe, 1500);
+      // Generate first pipe after a longer delay to give player time to prepare
+      const firstPipeTimeout = setTimeout(generatePipe, 3000); // 3 seconds delay
 
-      // Check for new pipes regularly but less frequently to reduce overhead
-      pipeTimerRef.current = setInterval(generatePipe, 300); // Check every 300ms (reduced from 220ms)
+      // Check for new pipes more frequently to ensure consistent spacing
+      // Higher frequency = more consistent spacing, but slightly more CPU usage
+      pipeTimerRef.current = setInterval(generatePipe, 100); // Check every 100ms for better consistency
 
       return () => {
         clearTimeout(firstPipeTimeout);
@@ -344,16 +430,18 @@ function App() {
           // Check if last giftbox is far enough
           if (prevGiftboxes.length > 0) {
             const lastGiftbox = prevGiftboxes[prevGiftboxes.length - 1];
-            const minDistance = 300; // Minimum distance between giftboxes
+            const currentScale = Math.min(gameWidth / REFERENCE_WIDTH, gameHeight / REFERENCE_HEIGHT);
+            const minDistance = 300 * currentScale; // Minimum distance between giftboxes
             if (lastGiftbox.x > gameWidth - minDistance) {
               return prevGiftboxes; // Don't spawn yet
             }
           }
           
           // Simple random Y position without collision checking
-          const groundHeight = 80;
-          const safeZoneTop = 100; // Avoid top area
-          const safeZoneBottom = gameHeight - groundHeight - 150; // Avoid ground area
+          const currentScale = Math.min(gameWidth / REFERENCE_WIDTH, gameHeight / REFERENCE_HEIGHT);
+          const giftboxGroundHeight = 80 * currentScale;
+          const safeZoneTop = 100 * currentScale; // Avoid top area
+          const safeZoneBottom = gameHeight - giftboxGroundHeight - (150 * currentScale); // Avoid ground area
           
           // Random Y position
           const randomY = safeZoneTop + Math.random() * (safeZoneBottom - safeZoneTop);
@@ -472,13 +560,16 @@ function App() {
   useEffect(() => {
     if (gameStarted && !gameOver) {
       const dropGift = () => {
+        const currentScale = Math.min(gameWidth / REFERENCE_WIDTH, gameHeight / REFERENCE_HEIGHT);
         const santaLeft = gameWidth * 0.15;
         const giftSpriteIndex = Math.floor(Math.random() * 8); // Random gift from 0-7
+        const currentSantaSize = BASE_SANTA_SIZE * currentScale;
+        const currentGiftSize = BASE_GIFT_SIZE * currentScale;
         
         const newGift = {
           id: Date.now() + Math.random(), // Ensure unique ID
-          x: santaLeft + SANTA_SIZE / 2 - GIFT_SIZE / 2, // Center under Santa
-          y: santaYRef.current + SANTA_SIZE, // Use ref to get current Santa Y position
+          x: santaLeft + currentSantaSize / 2 - currentGiftSize / 2, // Center under Santa
+          y: santaYRef.current + currentSantaSize, // Use ref to get current Santa Y position
           spriteIndex: giftSpriteIndex,
           velocityY: 0,
           isBreaking: false,
@@ -527,15 +618,28 @@ function App() {
           const currentSantaY = santaYRef.current;
           const santaLeftPos = gameWidth * 0.15;
           
-          // Adjust Santa size and hitbox padding for mobile
-          const currentSantaSize = isMobile ? 80 : SANTA_SIZE;
-          const scaleFactor = isMobile ? 0.8 : 1;
+          // Calculate scaled sizes based on current game dimensions
+          const currentScale = Math.min(gameWidth / REFERENCE_WIDTH, gameHeight / REFERENCE_HEIGHT);
+          const currentSantaSize = BASE_SANTA_SIZE * currentScale;
+          const currentPipeWidth = BASE_PIPE_WIDTH * currentScale;
+          const currentGiftSize = BASE_GIFT_SIZE * currentScale;
+          
+          // Scale pipe speed to maintain consistent relative speed across all screen sizes
+          const scaledPipeSpeed = PIPE_SPEED * currentScale;
+          
+          // Scale physics values to maintain consistent gameplay across all screen sizes
+          const scaledGravity = GRAVITY * currentScale;
+          const scaledGiftGravity = GIFT_GRAVITY * currentScale;
+          
+          // Scale ground height proportionally
+          const BASE_GROUND_HEIGHT = 80;
+          const groundHeight = BASE_GROUND_HEIGHT * currentScale;
         
-          // Hitbox padding matching visual hitbox in Santa.css
-          const hitboxPaddingLeft = 20 * scaleFactor;   // 20px desktop, 16px mobile
-          const hitboxPaddingRight = 10 * scaleFactor;  // 10px desktop, 8px mobile
-          const hitboxPaddingTop = 20 * scaleFactor;    // 20px desktop, 16px mobile
-          const hitboxPaddingBottom = 10 * scaleFactor; // 10px desktop, 8px mobile
+          // Hitbox padding scales proportionally
+          const hitboxPaddingLeft = BASE_SANTA_HITBOX_PADDING * currentScale;
+          const hitboxPaddingRight = (BASE_SANTA_HITBOX_PADDING / 2) * currentScale;
+          const hitboxPaddingTop = BASE_SANTA_HITBOX_PADDING * currentScale;
+          const hitboxPaddingBottom = (BASE_SANTA_HITBOX_PADDING / 2) * currentScale;
           
           const santaLeft = santaLeftPos + hitboxPaddingLeft;
           const santaRight = santaLeftPos + currentSantaSize - hitboxPaddingRight;
@@ -545,7 +649,6 @@ function App() {
           // Update santa position
           setSantaY((y) => {
           const newY = y + (santaVelocity * speedMultiplier);
-          const groundHeight = 80;
           const groundLevel = gameHeight - groundHeight;
           
           // Calculate Santa's bottom position with hitbox padding
@@ -583,14 +686,14 @@ function App() {
 
           // Update santa velocity
           // Stop applying gravity when at ground level
-          const groundHeight = 80;
-          const groundLevel = gameHeight - groundHeight;
-          const santaBottomEdge = santaY + currentSantaSize - hitboxPaddingBottom;
+          // groundHeight already calculated above
+          const groundLevelForVelocity = gameHeight - groundHeight;
+          const santaBottomEdgeForVelocity = santaY + currentSantaSize - hitboxPaddingBottom;
           
-          if (isDead && santaBottomEdge < groundLevel) {
-            setSantaVelocity((v) => v + (GRAVITY * speedMultiplier));
-          } else if (!isDead && santaBottomEdge < groundLevel) {
-            setSantaVelocity((v) => v + (GRAVITY * speedMultiplier));
+          if (isDead && santaBottomEdgeForVelocity < groundLevelForVelocity) {
+            setSantaVelocity((v) => v + (scaledGravity * speedMultiplier));
+          } else if (!isDead && santaBottomEdgeForVelocity < groundLevelForVelocity) {
+            setSantaVelocity((v) => v + (scaledGravity * speedMultiplier));
           } else {
             // At ground, stop velocity
             setSantaVelocity(0);
@@ -611,14 +714,17 @@ function App() {
           const updatedPipes = prevPipes
             .map((pipe) => ({
               ...pipe,
-              x: pipe.x - (PIPE_SPEED * speedMultiplier),
+              x: pipe.x - (scaledPipeSpeed * speedMultiplier),
             }))
-            .filter((pipe) => pipe.x > -PIPE_WIDTH * 2); // Keep slightly more for smooth transitions
+            .filter((pipe) => {
+              const currentScale = Math.min(gameWidth / REFERENCE_WIDTH, gameHeight / REFERENCE_HEIGHT);
+              return pipe.x > -BASE_PIPE_WIDTH * currentScale * 2;
+            }); // Keep slightly more for smooth transitions
 
           // Check collision and scoring with each pipe
           updatedPipes.forEach((pipe) => {
             const pipeLeft = pipe.x;
-            const pipeRight = pipe.x + PIPE_WIDTH;
+            const pipeRight = pipe.x + currentPipeWidth;
 
             // Check if santa passed the pipe for scoring
             // Use center of Santa instead of right edge for more reliable scoring
@@ -627,7 +733,6 @@ function App() {
               scoredPipesRef.current.add(pipe.id);
               playSound('point');
               setScore((s) => s + 1);
-              console.log('Score!', s + 1, 'Pipe ID:', pipe.id);
             }
 
             // Check collision with top pipe
@@ -642,9 +747,9 @@ function App() {
             }
             
             // Check collision with Christmas tree (bottom obstacle)
-            const treeHeights = { small: 200, medium: 300, large: 400 };
-            const treeHeight = treeHeights[pipe.treeSize];
-            const groundHeight = 80; // Ground height
+            // Use currentScale and groundHeight already calculated above
+            const baseTreeHeights = { small: 200, medium: 300, large: 400 };
+            const treeHeight = baseTreeHeights[pipe.treeSize] * currentScale;
             const treeHitboxHeightReduction = 0; // No reduction - full height hitbox
             
             // Convert tree position to top-down coordinates
@@ -682,15 +787,17 @@ function App() {
               .map((giftbox) => {
                 const newGiftbox = {
                   ...giftbox,
-                  x: giftbox.x - (PIPE_SPEED * speedMultiplier),
+                  x: giftbox.x - (scaledPipeSpeed * speedMultiplier),
                 };
                 
                 // Check collision with Santa
                 if (!giftbox.collected && !isDead) {
+                  // currentScale already calculated above
+                  const giftboxSize = 60 * currentScale; // Scale giftbox size
                   const giftboxLeft = giftbox.x;
-                  const giftboxRight = giftbox.x + 60; // Giftbox size
+                  const giftboxRight = giftbox.x + giftboxSize;
                   const giftboxTop = giftbox.initialY;
-                  const giftboxBottom = giftbox.initialY + 60;
+                  const giftboxBottom = giftbox.initialY + giftboxSize;
                   
                   const collision = 
                     giftboxSantaRight > giftboxLeft &&
@@ -718,7 +825,7 @@ function App() {
             return prevDecors
               .map((decor) => ({
                 ...decor,
-                x: decor.x - (PIPE_SPEED * speedMultiplier),
+                x: decor.x - (scaledPipeSpeed * speedMultiplier),
               }))
               .filter((decor) => decor.x > -200); // Remove when off screen
             });
@@ -727,7 +834,7 @@ function App() {
           // Update gifts position
           setGifts((prevGifts) => {
           const updatedGifts = prevGifts.map((gift) => {
-            let newVelocityY = gift.velocityY + (GIFT_GRAVITY * speedMultiplier);
+            let newVelocityY = gift.velocityY + (scaledGiftGravity * speedMultiplier);
             let newY = gift.y + (newVelocityY * speedMultiplier);
             let isBreaking = gift.isBreaking; // Keep existing breaking state
             let breakingTime = gift.breakingTime || 0;
@@ -737,12 +844,12 @@ function App() {
               // Check collision with pipes
               pipes.forEach((pipe) => {
                 const giftLeft = gift.x;
-                const giftRight = gift.x + GIFT_SIZE;
+                  const giftRight = gift.x + currentGiftSize;
                 const giftTop = newY;
-                const giftBottom = newY + GIFT_SIZE;
+                  const giftBottom = newY + currentGiftSize;
 
                 const pipeLeft = pipe.x;
-                const pipeRight = pipe.x + PIPE_WIDTH;
+                const pipeRight = pipe.x + currentPipeWidth;
 
                 // Check if gift overlaps with pipe horizontally
                 if (giftRight > pipeLeft && giftLeft < pipeRight) {
@@ -856,24 +963,65 @@ function App() {
     return decors.filter((decor) => decor.x > -200 && decor.x < gameWidth + 200);
   }, [decors, gameWidth, isMobile]);
 
+  // Snow overlay for in-game window
+  const snowflakes = useMemo(() => (
+    [...Array(50)].map(() => ({
+      left: `${Math.random() * 100}%`,
+      delay: `${Math.random() * 5}s`,
+      duration: `${8 + Math.random() * 6}s`,
+      sway: `${4 + Math.random() * 4}s`,
+      drift: `${-8 + Math.random() * 16}px`,
+      size: `${16 + Math.random() * 10}px`,
+      opacity: 0.6 + Math.random() * 0.4,
+    }))
+  ), []);
+
+  // Set CSS variables on document root for all components to use
+  useEffect(() => {
+    document.documentElement.style.setProperty('--game-scale', scale);
+    document.documentElement.style.setProperty('--game-scale-x', scaleX);
+    document.documentElement.style.setProperty('--game-scale-y', scaleY);
+    document.documentElement.style.setProperty('--game-width', `${gameWidth}px`);
+    document.documentElement.style.setProperty('--game-height', `${gameHeight}px`);
+    document.documentElement.style.setProperty('--reference-width', `${REFERENCE_WIDTH}px`);
+    document.documentElement.style.setProperty('--reference-height', `${REFERENCE_HEIGHT}px`);
+  }, [scale, scaleX, scaleY, gameWidth, gameHeight]);
+
   return (
     <>
+      {/* Global branch logo for non-game screens */}
+      {(showLoading || showIntro || showEnterID || showMainMenu) && (
+        <img
+          src="/assets/branch.png"
+          alt="Branch logo"
+          className="branch-logo-global"
+        />
+      )}
+
+      {showLeaderboard && (
+        <LeaderboardOverlay 
+          entries={leaderboard} 
+          onClose={() => setShowLeaderboard(false)} 
+        />
+      )}
+
       {showLoading && <LoadingScreen onComplete={() => {
         setShowLoading(false);
         setShowEnterID(true);
       }} />}
 
-      {showMainMenu && (
+      {/* MainMenu removed as requested */}
+      {/* {showMainMenu && (
         <MainMenu 
           onPlay={handlePlay}
           onLeaderboard={handleLeaderboard}
           onCredits={handleCredits}
         />
-      )}
+      )} */}
 
       {showIntro && <Intro onComplete={() => {
         setShowIntro(false);
-        setShowMainMenu(true);
+        // Skip main menu, game starts directly after intro
       }} />}
 
       {showEnterID && <EnterID 
@@ -888,15 +1036,59 @@ function App() {
         }}
       />}
       
-      <div className={`game-container ${showLoading || showIntro || showEnterID || showMainMenu ? 'intro-active' : ''}`} ref={gameContainerRef}>
+      <div 
+        className={`game-container ${showLoading || showIntro || showEnterID || showMainMenu ? 'intro-active' : ''}`} 
+        ref={gameContainerRef}
+        style={{
+          '--scale': scale,
+          '--scale-x': scaleX,
+          '--scale-y': scaleY,
+          '--game-width': `${gameWidth}px`,
+          '--game-height': `${gameHeight}px`,
+          width: `${gameWidth}px`,
+          height: `${gameHeight}px`,
+        }}
+      >
+        {/* Branch logo anchored to game window only during play */}
+        <img
+          src="/assets/branch.png"
+          alt="Branch logo"
+          className="branch-logo-game"
+        />
+
+        {/* Snow overlay only during gameplay window */}
+        {!(showLoading || showIntro || showEnterID || showMainMenu) && (
+          <div className="game-snowflakes">
+            {snowflakes.map((flake, i) => (
+              <div
+                key={i}
+                className="game-snowflake"
+                style={{
+                  left: flake.left,
+                  animationDelay: flake.delay,
+                  '--snow-duration': flake.duration,
+                  '--snow-sway': flake.sway,
+                  '--snow-drift': flake.drift,
+                  fontSize: flake.size,
+                  opacity: flake.opacity,
+                }}
+              >
+                ❄
+              </div>
+            ))}
+          </div>
+        )}
+
         <Score 
           score={score} 
           highScore={highScore}
           gameStarted={gameStarted}
-          gameOver={gameOver}
+          gameOver={gameOver && !showLeaderboard}
+          onRetry={resetGame}
+          onShowLeaderboard={() => setShowLeaderboard(true)}
         />
         
-        <Santa santaY={santaY} rotation={rotation} isDead={isDead} showHitbox={showHitbox} />
+        <Santa santaY={santaY} rotation={rotation} isDead={isDead} />
       
       {/* Only render pipes in viewport for better performance */}
       {visiblePipes.map((pipe) => (
@@ -906,7 +1098,6 @@ function App() {
             topPipeHeight={pipe.topHeight}
             gap={pipeGap}
             gameHeight={gameHeight}
-            showHitbox={showHitbox}
           />
           <ChristmasTree
             treeX={pipe.x}
@@ -914,7 +1105,6 @@ function App() {
             gameHeight={gameHeight}
             type={pipe.treeType}
             size={pipe.treeSize}
-            showHitbox={showHitbox}
           />
         </React.Fragment>
       ))}
@@ -925,7 +1115,6 @@ function App() {
           key={giftbox.id}
           x={giftbox.x}
           y={giftbox.initialY}
-          showHitbox={showHitbox}
         />
       ))}
 
@@ -960,7 +1149,7 @@ function App() {
         />
       ))}
 
-      <Ground gameWidth={gameWidth} gameStarted={gameStarted} gameOver={gameOver} showHitbox={showHitbox} />
+      <Ground gameWidth={gameWidth} gameStarted={gameStarted} gameOver={gameOver} />
     </div>
     </>
   );

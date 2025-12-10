@@ -1,6 +1,5 @@
 .game-container {
-  width: 500px;
-  height: 750px;
+  /* Dimensions set via inline style from App.jsx */
   max-width: 100%;
   max-height: 100vh;
   margin: 0 auto;
@@ -14,20 +13,47 @@
   transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
+.game-snowflakes {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 120;
+}
+
+.game-snowflake {
+  position: absolute;
+  top: -10%;
+  color: white;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+  /* Separate fall on top property so sway transform is not overridden */
+  animation: game-snow-fall var(--snow-duration, 10s) linear infinite,
+             game-snow-sway var(--snow-sway, 6s) ease-in-out infinite alternate;
+}
+
+@keyframes game-snow-fall {
+  to {
+    top: 110%;
+  }
+}
+
+@keyframes game-snow-sway {
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(var(--snow-drift, 10px), 0, 0); }
+}
+
 .game-container.intro-active {
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
 }
 
-/* Desktop: center game with fixed size */
+/* Desktop: center game with responsive size */
 @media (min-width: 801px) {
   .game-container {
-    width: 500px;
-    height: 750px;
-    margin-top: calc((100vh - 750px) / 2);
-    border: 3px solid #333;
-    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+    margin-top: calc((100vh - var(--game-height, 750px)) / 2);
+    border: calc(3px * var(--scale, 1)) solid #333;
+    box-shadow: 0 0 calc(30px * var(--scale, 1)) rgba(0, 0, 0, 0.5);
   }
   
   .game-container.intro-active {
@@ -39,8 +65,6 @@
 /* Mobile: full screen */
 @media (max-width: 800px) {
   .game-container {
-    width: 100vw;
-    height: 100vh;
     max-width: 100vw;
     max-height: 100vh;
     border: none;
@@ -52,10 +76,10 @@
 .game-container::before {
   content: '';
   position: absolute;
-  bottom: 80px;
+  bottom: calc(80px * var(--scale, 1));
   left: 0;
   right: 0;
-  height: 40px;
+  height: calc(40px * var(--scale, 1));
   background: linear-gradient(to bottom, transparent, rgba(100, 80, 60, 0.2));
   z-index: 2;
   pointer-events: none;
@@ -64,7 +88,7 @@
 .game-container::after {
   content: '';
   position: absolute;
-  bottom: 80px;
+  bottom: calc(80px * var(--scale, 1));
   left: 0;
   right: 0;
   height: 0;
@@ -73,12 +97,26 @@
   pointer-events: none;
 }
 
-@media (max-width: 768px) {
-  .game-container::before {
-    height: 80px;
-  }
-  
-  .game-container::after {
-    height: 40px;
-  }
+.branch-logo-global {
+  position: fixed;
+  top: calc(12px * var(--game-scale, 1));
+  right: calc(12px * var(--game-scale, 1));
+  width: calc(160px * var(--game-scale, 1));
+  max-width: 30vw;
+  height: auto;
+  z-index: 30000; /* Above loading/enter/intro overlays */
+  pointer-events: none;
+  object-fit: contain;
+}
+
+.branch-logo-game {
+  position: absolute;
+  top: calc(12px * var(--scale, 1));
+  right: calc(12px * var(--scale, 1));
+  width: calc(100px * var(--scale, 1));
+  max-width: 32vw;
+  height: auto;
+  z-index: 30000;
+  pointer-events: none;
+  object-fit: contain;
 }

@@ -3,7 +3,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 80px;
+  height: calc(80px * var(--scale, 1));
   overflow: hidden;
   z-index: 100;
   pointer-events: none;
@@ -28,7 +28,7 @@
     transform: translateX(0);
   }
   100% {
-    transform: translateX(calc(-1 * var(--tile-width)));
+    transform: translateX(calc(-1 * 336px * var(--scale, 1)));
   }
 }
 

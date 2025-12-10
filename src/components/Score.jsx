@@ -18,12 +18,22 @@ const NumberDisplay = ({ number }) => {
   );
 };
 
-const Score = ({ score, highScore, gameStarted, gameOver }) => {
+const Score = ({ score, highScore, gameStarted, gameOver, onRetry, onShowLeaderboard }) => {
+  const handleShowLeaderboard = () => {
+    if (typeof onShowLeaderboard === 'function') {
+      onShowLeaderboard();
+    }
+  };
+
   return (
-    <div className="score-container">
+    <div className={`score-container ${gameOver ? 'game-over-active' : ''}`}>
       {!gameStarted && !gameOver && (
         <div className="start-message">
-          <h1>Santa Flappy Bird</h1>
+          <img
+            src="/assets/santa_express.png"
+            alt="Santa Express"
+            className="start-title"
+          />
           <p>Tap or Press Space to Start</p>
         </div>
       )}
@@ -35,17 +45,44 @@ const Score = ({ score, highScore, gameStarted, gameOver }) => {
       )}
       
       {gameOver && (
-        <div className="game-over">
-          <h2>Game Over!</h2>
-          <div className="final-score">
-            <span>Score: </span>
-            <NumberDisplay number={score} />
+        <div className="game-over-overlay">
+          <div className="game-over-card">
+            <img
+              src="/assets/gameover.png"
+              alt="Game Over"
+              className="game-over-title"
+            />
+
+            <div className="game-over-scores">
+              <div className="score-row">
+              <img src="/assets/score.png" alt="Score" className="score-label" />
+                <NumberDisplay number={score} />
+              </div>
+              <div className="score-row">
+              <img src="/assets/best.png" alt="Best" className="score-label" />
+                <NumberDisplay number={highScore} />
+              </div>
+            </div>
+
+            <div className="game-over-actions" aria-hidden="true">
+              <button
+                className="game-over-btn"
+                type="button"
+                onClick={onRetry}
+                aria-label="Retry"
+              >
+                <img src="/assets/retry.png" alt="Retry" />
+              </button>
+              <button
+                className="game-over-btn"
+                type="button"
+                onClick={handleShowLeaderboard}
+                aria-label="Leaderboard"
+              >
+                <img src="/assets/leaderboard.png" alt="Leaderboard" />
+              </button>
+            </div>
           </div>
-          <div className="high-score">
-            <span>Best: </span>
-            <NumberDisplay number={highScore} />
-          </div>
-          <p className="restart-message">Tap or Press Space to Restart</p>
         </div>
       )}
     </div>

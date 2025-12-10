@@ -1,7 +1,7 @@
 import React from 'react';
 import './Santa.css';
 
-const Santa = React.memo(({ santaY, santaX, rotation, isDead, showHitbox = false }) => {
+const Santa = React.memo(({ santaY, santaX, rotation, isDead }) => {
   // Santa sprite is 2048x2048 with 4x4 grid (each sprite is 512x512)
   // Normal: (0, 0)
   // Dead: (3, 3) - row 3, col 3
@@ -19,7 +19,7 @@ const Santa = React.memo(({ santaY, santaX, rotation, isDead, showHitbox = false
   
   return (
     <div
-      className={`santa ${isDead ? 'santa-dead' : ''} ${showHitbox ? 'show-hitbox' : ''}`}
+      className={`santa ${isDead ? 'santa-dead' : ''}`}
       style={{
         top: `${santaY}px`,
         left: santaX !== undefined ? `${santaX}px` : '15%',
@@ -34,7 +34,7 @@ const Santa = React.memo(({ santaY, santaX, rotation, isDead, showHitbox = false
           objectPosition: `-${offsetX}px -${offsetY}px`,
           width: '2048px',
           height: '2048px',
-          transform: 'scale(0.1953125)',
+          transform: `scale(calc(0.1953125 * var(--scale, 1)))`,
           transformOrigin: 'top left',
         }}
       />

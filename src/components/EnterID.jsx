@@ -1,203 +1,227 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import './EnterID.css';
 
 const EnterID = ({ onSubmit, onCancel }) => {
-  const [vmoId, setVmoId] = useState('');
-  const [cursorVisible, setCursorVisible] = useState(true);
+  const [vmoId, setVmoId] = useState(['', '', '', '']);
   const [showWarning, setShowWarning] = useState(false);
-  const inputRef = useRef(null);
+  const inputRefs = useRef([null, null, null, null]);
   const MAX_LENGTH = 4;
+  const snowflakes = useMemo(() => (
+    [...Array(50)].map(() => ({
+      left: `${Math.random() * 100}%`,
+      delay: `${Math.random() * 5}s`,
+      duration: `${8 + Math.random() * 6}s`,
+    }))
+  ), []);
 
-  // Blinking cursor effect
+  const focusInput = (targetIndex) => {
+    setTimeout(() => {
+      inputRefs.current[targetIndex]?.focus();
+    }, 0);
+  };
+
+  const focusFirstEmpty = () => {
+    const emptyIndex = vmoId.findIndex((digit) => digit === '');
+    return emptyIndex === -1 ? MAX_LENGTH - 1 : emptyIndex;
+  };
+
+  // Focus first input on mount
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCursorVisible(prev => !prev);
-    }, 500);
-    return () => clearInterval(interval);
+    focusInput(0);
   }, []);
 
-  // Character map for gbs-mono.png (128x112, 8x8 chars, 16 columns x 14 rows)
-  const getCharPosition = (char) => {
-    const charCode = char.charCodeAt(0);
-    
-    // ASCII mapping to sprite position
-    // Row 0 (0-15): Space(32) to /
-    // Row 1 (16-31): 0-9, :;<=>?
-    // Row 2 (32-47): @, A-O
-    // Row 3 (48-63): P-Z, [\]^_
-    // Row 4 (64-79): `, a-o
-    // Row 5 (80-95): p-z, {|}~
-    
-    let index;
-    if (charCode >= 32 && charCode <= 126) {
-      index = charCode - 32;
-    } else if (char === '_') {
-      index = 63; // underscore position
-    } else {
-      return null;
-    }
-    
-    const col = index % 16;
-    const row = Math.floor(index / 16);
-    
-    return { col, row };
-  };
+  const handleInputChange = (index, input) => {
+    const rawValue = typeof input === 'string' ? input : input?.target?.value || '';
+    // Keep only last digit
+    const value = rawValue.replace(/[^0-9]/g, '').slice(-1);
 
-  const renderText = (text) => {
-    return text.split('').map((char, index) => {
-      const pos = getCharPosition(char.toUpperCase());
-      if (!pos) return null;
-      
-      return (
-        <div
-          key={index}
-          className="bitmap-char"
-          style={{
-            backgroundImage: 'url(/assets/gbs-mono.png)',
-            backgroundPosition: `-${pos.col * 8}px -${pos.row * 8}px`,
-            width: '8px',
-            height: '8px',
-            imageRendering: 'pixelated',
-            display: 'inline-block'
-          }}
-        />
-      );
+    setVmoId((prev) => {
+      const next = [...prev];
+      next[index] = value;
+      return next;
     });
-  };
-
-  const handleKeyDown = useCallback((e) => {
-    // Skip if the hidden input is focused (mobile keyboard is active)
-    if (document.activeElement === inputRef.current) {
-      return;
-    }
-    
-    if (e.key === 'Enter') {
-      if (vmoId.trim().length === MAX_LENGTH) {
-        onSubmit(vmoId.trim());
-      } else {
-        setShowWarning(true);
-        setTimeout(() => setShowWarning(false), 2000);
-      }
-    } else if (e.key === 'Backspace') {
-      setVmoId(prev => prev.slice(0, -1));
-      setShowWarning(false);
-    } else if (e.key.length === 1 && vmoId.length < MAX_LENGTH) {
-      // Only allow digits 0-9
-      if (/^[0-9]$/.test(e.key)) {
-        setVmoId(prev => prev + e.key);
-        setShowWarning(false);
-      }
-    }
-  }, [vmoId, onSubmit, onCancel]);
-
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
-
-  // Handle hidden input change (for mobile keyboard)
-  const handleInputChange = (e) => {
-    const value = e.target.value.replace(/[^0-9]/g, '').slice(0, MAX_LENGTH);
-    setVmoId(value);
     setShowWarning(false);
+
+    // Auto-focus next input after state updates
+    if (value && index < MAX_LENGTH - 1) {
+      setTimeout(() => focusInput(index + 1), 10);
+    }
   };
 
-  // Handle hidden input keydown (for Enter key on mobile)
-  const handleInputKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      if (vmoId.trim().length === MAX_LENGTH) {
-        onSubmit(vmoId.trim());
-      } else {
-        setShowWarning(true);
-        setTimeout(() => setShowWarning(false), 2000);
+  const handleKeyDown = (index, e) => {
+    if (e.key === 'Backspace') {
+      if (!vmoId[index] && index > 0) {
+        // Move to previous input if current is empty
+        e.preventDefault();
+        inputRefs.current[index - 1]?.focus();
+      } else if (vmoId[index]) {
+        // Clear current input
+        setVmoId((prev) => {
+          const next = [...prev];
+          next[index] = '';
+          return next;
+        });
       }
+    } else if (e.key === 'ArrowLeft' && index > 0) {
+      e.preventDefault();
+      inputRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowRight' && index < MAX_LENGTH - 1) {
+      e.preventDefault();
+      inputRefs.current[index + 1]?.focus();
+    } else if (e.key.length === 1 && /^[0-9]$/.test(e.key)) {
+      // Handle direct number input
+      e.preventDefault();
+      handleInputChange(index, { target: { value: e.key } });
     }
   };
 
-  // Focus input when clicking on the input area only
-  const handleInputAreaClick = (e) => {
-    e.stopPropagation();
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, MAX_LENGTH);
+    const newVmoId = ['', '', '', ''];
+    pastedData.split('').forEach((char, i) => {
+      if (i < MAX_LENGTH) {
+        newVmoId[i] = char;
+      }
+    });
+    setVmoId(newVmoId);
+    setShowWarning(false);
+    
+    // Focus the next empty input or last input
+    const nextIndex = Math.min(pastedData.length, MAX_LENGTH - 1);
+    setTimeout(() => {
+      inputRefs.current[nextIndex]?.focus();
+    }, 0);
   };
 
-  // Handle confirm button click
   const handleConfirmClick = (e) => {
     e.stopPropagation();
     e.preventDefault();
     
-    // Blur input first to ensure state is updated
-    if (inputRef.current) {
-      inputRef.current.blur();
-    }
+    const fullId = vmoId.join('');
     
-    // Use a small timeout to ensure state is synced
-    setTimeout(() => {
-      const currentValue = inputRef.current ? inputRef.current.value : vmoId;
-      const cleanValue = currentValue.replace(/[^0-9]/g, '').trim();
-      
-      if (cleanValue.length === MAX_LENGTH) {
-        onSubmit(cleanValue);
+    if (fullId.length === MAX_LENGTH) {
+      onSubmit(fullId);
+    } else {
+      setShowWarning(true);
+      setTimeout(() => setShowWarning(false), 2000);
+    }
+  };
+
+  // Allow typing digits without manually focusing each input
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      const isDigit = e.key.length === 1 && /^[0-9]$/.test(e.key);
+      const isBackspace = e.key === 'Backspace';
+      if (!isDigit && !isBackspace) return;
+      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+
+      e.preventDefault();
+
+      if (isDigit) {
+        const targetIndex = focusFirstEmpty();
+        handleInputChange(targetIndex, e.key);
+        const nextIndex = Math.min(targetIndex + 1, MAX_LENGTH - 1);
+        setTimeout(() => focusInput(nextIndex), 0);
+      } else if (isBackspace) {
+        let targetIndex = -1;
+        for (let i = MAX_LENGTH - 1; i >= 0; i -= 1) {
+          if (vmoId[i]) {
+            targetIndex = i;
+            break;
+          }
+        }
+
+        if (targetIndex === -1) {
+          focusInput(0);
+          return;
+        }
+
+        setVmoId((prev) => {
+          const next = [...prev];
+          next[targetIndex] = '';
+          return next;
+        });
+        focusInput(targetIndex);
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [vmoId]);
+
+  const handleKeyPress = useCallback((e) => {
+    if (e.key === 'Enter') {
+      const fullId = vmoId.join('');
+      if (fullId.length === MAX_LENGTH) {
+        onSubmit(fullId);
       } else {
         setShowWarning(true);
         setTimeout(() => setShowWarning(false), 2000);
       }
-    }, 50);
-  };
+    }
+  }, [vmoId, onSubmit]);
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [handleKeyPress]);
+
+  const fullId = vmoId.join('');
 
   return (
     <div className="enter-id-overlay">
+      <div className="snowflakes">
+        {snowflakes.map((flake, i) => (
+          <div
+            key={i}
+            className="snowflake"
+            style={{
+              left: flake.left,
+              animationDelay: flake.delay,
+              animationDuration: flake.duration,
+            }}
+          >
+            ❄
+          </div>
+        ))}
+      </div>
       <div className="enter-id-container">
-        {/* Hidden input for mobile keyboard */}
-        <input
-          ref={inputRef}
-          type="tel"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          value={vmoId}
-          onChange={handleInputChange}
-          onKeyDown={handleInputKeyDown}
-          className="hidden-input"
-          autoComplete="off"
-          maxLength={MAX_LENGTH}
-        />
-        
-        <div className="bitmap-text-container">
-          <div className="bitmap-line">
-            {renderText('ENTER YOUR VMO_ID')}
+        <div className="enter-id-content">
+          <img 
+            src="/assets/vmo_id.png" 
+            alt="VMO_ID" 
+            className="vmo-id-label"
+          />
+          
+          <div className="input-boxes-container">
+            {vmoId.map((digit, index) => (
+              <input
+                key={index}
+                ref={(el) => (inputRefs.current[index] = el)}
+                type="tel"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength="1"
+                value={digit}
+                onChange={(e) => handleInputChange(index, e)}
+                onKeyDown={(e) => handleKeyDown(index, e)}
+                onPaste={handlePaste}
+                className={`input-box ${showWarning ? 'input-error' : ''}`}
+                autoComplete="off"
+              />
+            ))}
           </div>
           
-          <div className="bitmap-input-line" onClick={handleInputAreaClick}>
-            <div className="bitmap-input-display">
-              {renderText(vmoId)}
-              {vmoId.length < MAX_LENGTH && (
-                <div
-                  className="bitmap-char"
-                  style={{
-                    backgroundImage: 'url(/assets/gbs-mono.png)',
-                    backgroundPosition: `-${15 * 8}px -${3 * 8}px`, // underscore position
-                    width: '8px',
-                    height: '8px',
-                    imageRendering: 'pixelated',
-                    display: 'inline-block'
-                  }}
-                />
-              )}
-            </div>
-          </div>
+          <button className="resume-button" onClick={handleConfirmClick}>
+            <img src="/assets/Game_Paused/Resume_BTN.png" alt="Confirm" />
+          </button>
           
-          <div className="bitmap-button-hints">
-            <div className="bitmap-line confirm-button" onClick={handleConfirmClick}>
-              {renderText('CONFIRM')}
+          {showWarning && (
+            <div className="warning-message">
+              Please enter 4 digits
             </div>
-            {showWarning && (
-              <div className="bitmap-line warning-text">
-                {renderText('PLEASE ENTER 4 DIGITS')}
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
     </div>

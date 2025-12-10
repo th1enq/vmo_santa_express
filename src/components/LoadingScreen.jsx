@@ -1,9 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import './LoadingScreen.css';
 
 const LoadingScreen = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
   const [loaded, setLoaded] = useState(false);
+  const snowflakes = useMemo(() => (
+    [...Array(50)].map(() => ({
+      left: `${Math.random() * 100}%`,
+      delay: `${Math.random() * 5}s`,
+      duration: `${8 + Math.random() * 6}s`,
+    }))
+  ), []);
 
   useEffect(() => {
     // Simulate loading progress
@@ -44,6 +51,21 @@ const LoadingScreen = ({ onComplete }) => {
 
   return (
     <div className="loading-screen" style={{ cursor: loaded ? 'pointer' : 'default' }}>
+      <div className="snowflakes">
+        {snowflakes.map((flake, i) => (
+          <div
+            key={i}
+            className="snowflake"
+            style={{
+              left: flake.left,
+              animationDelay: flake.delay,
+              animationDuration: flake.duration,
+            }}
+          >
+            ❄
+          </div>
+        ))}
+      </div>
       <div className="loading-content">
         <img 
           src="/assets/santa_express.png" 

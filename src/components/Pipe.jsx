@@ -1,16 +1,20 @@
 import React from 'react';
 import './Pipe.css';
 
-const PipePair = React.memo(({ pipeX, topPipeHeight, gap, gameHeight, showHitbox = false }) => {
+const PipePair = React.memo(({ pipeX, topPipeHeight, gap, gameHeight }) => {
+  const pipeHeight = topPipeHeight + 40;
+  
   return (
     <>
       {/* Top Pipe only */}
       <div
-        className={`pipe pipe-top ${showHitbox ? 'show-hitbox' : ''}`}
+        className="pipe pipe-top"
         style={{
           left: `${pipeX}px`,
-          height: `${topPipeHeight + 40}px`,
+          height: `${pipeHeight}px`,
           top: '-20px',
+          // Allow the pipe cap to extend beyond the body without being clipped
+          overflow: 'visible',
         }}
       >
         <img 
@@ -18,10 +22,14 @@ const PipePair = React.memo(({ pipeX, topPipeHeight, gap, gameHeight, showHitbox
           alt="pipe"
           className="pipe-image"
           style={{
-            width: '100%',
+            // Slightly widen the image so the pipe cap can overhang like desktop
+            width: 'calc(100% + 12px * var(--scale, 1))',
+            marginLeft: 'calc(-6px * var(--scale, 1))',
             height: '100%',
-            objectFit: 'fill',
-            objectPosition: 'bottom center',
+            // Keep aspect ratio so short pipes are not squished
+            objectFit: 'cover',
+            // Anchor to the head so short pipes crop the body, not the cap
+            objectPosition: 'top center',
             transform: 'rotate(180deg)',
             transformOrigin: 'center center',
             display: 'block',
