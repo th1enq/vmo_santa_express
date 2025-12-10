@@ -25,14 +25,16 @@ const ChristmasTree = React.memo(({ treeX, gap, gameHeight, type, size, showHitb
     >
       <img
         src="/assets/red_pipe.png"
-        alt="pipe"
+        alt="tree"
         style={{
-          height: '100%',
-          width: '100%',
-          imageRendering: 'auto',
           position: 'absolute',
-          left: '0',
+          bottom: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
           objectFit: 'fill',
+          objectPosition: 'bottom center',
+          display: 'block',
         }}
       />
       {showHitbox && (

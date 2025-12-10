@@ -9,7 +9,7 @@ const PipePair = React.memo(({ pipeX, topPipeHeight, gap, gameHeight, showHitbox
         className={`pipe pipe-top ${showHitbox ? 'show-hitbox' : ''}`}
         style={{
           left: `${pipeX}px`,
-          height: `${topPipeHeight + 20}px`,
+          height: `${topPipeHeight + 40}px`,
           top: '-20px',
         }}
       >
@@ -18,7 +18,13 @@ const PipePair = React.memo(({ pipeX, topPipeHeight, gap, gameHeight, showHitbox
           alt="pipe"
           className="pipe-image"
           style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'fill',
+            objectPosition: 'bottom center',
             transform: 'rotate(180deg)',
+            transformOrigin: 'center center',
+            display: 'block',
           }}
         />
       </div>

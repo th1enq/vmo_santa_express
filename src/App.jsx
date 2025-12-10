@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Santa from './components/Santa';
 import PipePair from './components/Pipe';
 import Gift from './components/Gift';
@@ -43,6 +43,7 @@ const PIPE_SPEED = 3;
 const SANTA_SIZE = 100;
 const SANTA_HITBOX_PADDING = 20; // Reduce hitbox by 20px on each side
 const GIFT_DROP_INTERVAL = 3000; // Drop gift every 3 seconds
+const GIFT_DROP_INTERVAL_MOBILE = 5000; // Drop gift every 5 seconds on mobile (less frequent)
 const GIFT_FALL_SPEED = 2;
 const GIFT_GRAVITY = 0.3;
 const GIFT_SIZE = 60;
@@ -283,14 +284,15 @@ function App() {
           
           // Detect mobile device
           const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
-          const gapSize = isMobile ? 180 : 190; // Mobile: 155, Desktop: 180
+          const gapSize = isMobile ? 210 : 210; // Mobile: 155, Desktop: 180
           
           // Calculate tree top position (from top of screen)
           const treeTopY = gameHeight - groundHeight - treeHeight;
           
           // Pipe top height = tree top - gap
           // This ensures gap is always exactly same size regardless of tree size
-          const height = treeTopY - gapSize;
+          // Ensure minimum height to prevent pipes from disappearing
+          const height = Math.max(50, treeTopY - gapSize);
           
           // 50% chance to spawn a floating giftbox between pipes
           const shouldSpawnGiftbox = Math.random() > 0.5;
@@ -439,9 +441,11 @@ function App() {
       };
 
       // Start dropping gifts after a short delay
+      // Use longer interval on mobile for better performance
+      const giftInterval = isMobile ? GIFT_DROP_INTERVAL_MOBILE : GIFT_DROP_INTERVAL;
       const initialDelay = setTimeout(() => {
         dropGift();
-        giftTimerRef.current = setInterval(dropGift, GIFT_DROP_INTERVAL);
+        giftTimerRef.current = setInterval(dropGift, giftInterval);
       }, 1000);
 
       return () => {
@@ -457,8 +461,8 @@ function App() {
   useEffect(() => {
     if (gameStarted && !gameOver) {
       // Use requestAnimationFrame for better performance
-      // Target FPS: 60 for desktop, 50 for mobile (balanced performance and speed)
-      const targetFPS = isMobile ? 50 : 60;
+      // Target FPS: 60 for desktop, 30 for mobile (optimized for performance)
+      const targetFPS = isMobile ? 30 : 60;
       const frameInterval = 1000 / targetFPS;
       let lastFrameTime = performance.now();
       let animationFrameId = null;
@@ -555,13 +559,14 @@ function App() {
           }
 
           // Update pipes position and check collision
+          // Remove pipes that are far off-screen to reduce memory usage
           setPipes((prevPipes) => {
           const updatedPipes = prevPipes
             .map((pipe) => ({
               ...pipe,
               x: pipe.x - (PIPE_SPEED * speedMultiplier),
             }))
-            .filter((pipe) => pipe.x > -PIPE_WIDTH);
+            .filter((pipe) => pipe.x > -PIPE_WIDTH * 2); // Keep slightly more for smooth transitions
 
           // Check collision and scoring with each pipe
           updatedPipes.forEach((pipe) => {
@@ -629,55 +634,57 @@ function App() {
 
           // Update floating giftboxes position and check collision
           setFloatingGiftboxes((prevGiftboxes) => {
-          // Use same hitbox as main collision detection
-          const giftboxSantaLeft = santaLeft;
-          const giftboxSantaRight = santaRight;
-          const giftboxSantaTop = santaTop;
-          const giftboxSantaBottom = santaBottom;
-          
-          return prevGiftboxes
-            .map((giftbox) => {
-              const newGiftbox = {
-                ...giftbox,
-                x: giftbox.x - (PIPE_SPEED * speedMultiplier),
-              };
-              
-              // Check collision with Santa
-              if (!giftbox.collected && !isDead) {
-                const giftboxLeft = giftbox.x;
-                const giftboxRight = giftbox.x + 60; // Giftbox size
-                const giftboxTop = giftbox.initialY;
-                const giftboxBottom = giftbox.initialY + 60;
+            // Use same hitbox as main collision detection
+            const giftboxSantaLeft = santaLeft;
+            const giftboxSantaRight = santaRight;
+            const giftboxSantaTop = santaTop;
+            const giftboxSantaBottom = santaBottom;
+            
+            return prevGiftboxes
+              .map((giftbox) => {
+                const newGiftbox = {
+                  ...giftbox,
+                  x: giftbox.x - (PIPE_SPEED * speedMultiplier),
+                };
                 
-                const collision = 
-                  giftboxSantaRight > giftboxLeft &&
-                  giftboxSantaLeft < giftboxRight &&
-                  giftboxSantaBottom > giftboxTop &&
-                  giftboxSantaTop < giftboxBottom;
-                
-                if (collision) {
-                  // Collect giftbox
-                  playSound('point');
-                  setScore((prev) => prev + 1);
-                  newGiftbox.collected = true;
-                  return null; // Remove from array
+                // Check collision with Santa
+                if (!giftbox.collected && !isDead) {
+                  const giftboxLeft = giftbox.x;
+                  const giftboxRight = giftbox.x + 60; // Giftbox size
+                  const giftboxTop = giftbox.initialY;
+                  const giftboxBottom = giftbox.initialY + 60;
+                  
+                  const collision = 
+                    giftboxSantaRight > giftboxLeft &&
+                    giftboxSantaLeft < giftboxRight &&
+                    giftboxSantaBottom > giftboxTop &&
+                    giftboxSantaTop < giftboxBottom;
+                  
+                  if (collision) {
+                    // Collect giftbox
+                    playSound('point');
+                    setScore((prev) => prev + 1);
+                    newGiftbox.collected = true;
+                    return null; // Remove from array
+                  }
                 }
-              }
-              
-              return newGiftbox;
-            })
-            .filter((giftbox) => giftbox && giftbox.x > -100); // Remove when off screen or collected
+                
+                return newGiftbox;
+              })
+              .filter((giftbox) => giftbox && giftbox.x > -100); // Remove when off screen or collected
           });
 
-          // Update decorations position
-          setDecors((prevDecors) => {
-          return prevDecors
-            .map((decor) => ({
-              ...decor,
-              x: decor.x - (PIPE_SPEED * speedMultiplier),
-            }))
-            .filter((decor) => decor.x > -200); // Remove when off screen
-          });
+          // Update decorations position (only on desktop)
+          if (!isMobile) {
+            setDecors((prevDecors) => {
+            return prevDecors
+              .map((decor) => ({
+                ...decor,
+                x: decor.x - (PIPE_SPEED * speedMultiplier),
+              }))
+              .filter((decor) => decor.x > -200); // Remove when off screen
+            });
+          }
 
           // Update gifts position
           setGifts((prevGifts) => {
@@ -734,20 +741,22 @@ function App() {
           });
           });
 
-          // Update smoke animations
-          setSmokes((prevSmokes) => {
-          const now = Date.now();
-          return prevSmokes
-            .map((smoke) => {
-              const elapsed = now - smoke.createdAt;
-              const frame = Math.floor(elapsed / 50); // 50ms per frame
-              return {
-                ...smoke,
-                frame: frame,
-              };
-            })
-            .filter((smoke) => smoke.frame < 7); // Remove after 7 frames
-          });
+          // Update smoke animations (only on desktop)
+          if (!isMobile) {
+            setSmokes((prevSmokes) => {
+            const now = Date.now();
+            return prevSmokes
+              .map((smoke) => {
+                const elapsed = now - smoke.createdAt;
+                const frame = Math.floor(elapsed / 50); // 50ms per frame
+                return {
+                  ...smoke,
+                  frame: frame,
+                };
+              })
+              .filter((smoke) => smoke.frame < 7); // Remove after 7 frames
+            });
+          }
         }
         
         // Continue animation loop
@@ -782,6 +791,29 @@ function App() {
     setShowMainMenu(false);
     setShowCredits(true);
   };
+
+  // Filter objects in viewport for better performance (only render visible objects)
+  const visiblePipes = useMemo(() => {
+    const viewportMargin = 200;
+    return pipes.filter((pipe) => pipe.x > -viewportMargin && pipe.x < gameWidth + viewportMargin);
+  }, [pipes, gameWidth]);
+
+  const visibleGifts = useMemo(() => {
+    return gifts.filter((gift) => 
+      gift.x > -100 && gift.x < gameWidth + 100 && gift.y < gameHeight + 100
+    );
+  }, [gifts, gameWidth, gameHeight]);
+
+  const visibleFloatingGiftboxes = useMemo(() => {
+    return floatingGiftboxes.filter((giftbox) => 
+      giftbox.x > -200 && giftbox.x < gameWidth + 200
+    );
+  }, [floatingGiftboxes, gameWidth]);
+
+  const visibleDecors = useMemo(() => {
+    if (isMobile) return [];
+    return decors.filter((decor) => decor.x > -200 && decor.x < gameWidth + 200);
+  }, [decors, gameWidth, isMobile]);
 
   return (
     <>
@@ -825,7 +857,8 @@ function App() {
         
         <Santa santaY={santaY} rotation={rotation} isDead={isDead} showHitbox={showHitbox} />
       
-      {pipes.map((pipe) => (
+      {/* Only render pipes in viewport for better performance */}
+      {visiblePipes.map((pipe) => (
         <React.Fragment key={pipe.id}>
           <PipePair
             pipeX={pipe.x}
@@ -845,7 +878,8 @@ function App() {
         </React.Fragment>
       ))}
 
-      {floatingGiftboxes.map((giftbox) => (
+      {/* Floating giftboxes - disabled on mobile */}
+      {visibleFloatingGiftboxes.map((giftbox) => (
         <FloatingGiftbox
           key={giftbox.id}
           x={giftbox.x}
@@ -854,7 +888,8 @@ function App() {
         />
       ))}
 
-      {gifts.map((gift) => (
+      {/* Only render gifts in viewport */}
+      {visibleGifts.map((gift) => (
         <Gift
           key={gift.id}
           giftX={gift.x}
@@ -864,7 +899,8 @@ function App() {
         />
       ))}
 
-      {smokes.map((smoke) => (
+      {/* Smoke effects - disabled on mobile */}
+      {!isMobile && smokes.map((smoke) => (
         <Smoke
           key={smoke.id}
           x={smoke.x}
@@ -873,8 +909,8 @@ function App() {
         />
       ))}
 
-      {/* Decorations */}
-      {decors.map((decor) => (
+      {/* Decorations - disabled on mobile for performance */}
+      {visibleDecors.map((decor) => (
         <Decor
           key={decor.id}
           x={decor.x}
