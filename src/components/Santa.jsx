@@ -1,7 +1,7 @@
 import React from 'react';
 import './Santa.css';
 
-const Santa = ({ santaY, santaX, rotation, isDead, showHitbox = false }) => {
+const Santa = React.memo(({ santaY, santaX, rotation, isDead, showHitbox = false }) => {
   // Santa sprite is 2048x2048 with 4x4 grid (each sprite is 512x512)
   // Normal: (0, 0)
   // Dead: (3, 3) - row 3, col 3
@@ -23,7 +23,7 @@ const Santa = ({ santaY, santaX, rotation, isDead, showHitbox = false }) => {
       style={{
         top: `${santaY}px`,
         left: santaX !== undefined ? `${santaX}px` : '15%',
-        transform: `rotate(${rotation}deg)`,
+        transform: `translateZ(0) rotate(${rotation}deg)`,
       }}
     >
       <img
@@ -40,6 +40,8 @@ const Santa = ({ santaY, santaX, rotation, isDead, showHitbox = false }) => {
       />
     </div>
   );
-};
+});
+
+Santa.displayName = 'Santa';
 
 export default Santa;

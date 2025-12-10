@@ -4,7 +4,7 @@ import './Smoke.css';
 const SPRITE_SIZE = 1024; // 3072/3 = 1024
 const SMOKE_DISPLAY_SIZE = 80; // Display size in pixels
 
-const Smoke = ({ x, y, frame }) => {
+const Smoke = React.memo(({ x, y, frame }) => {
   // Calculate sprite position based on frame (0-6)
   // Assuming 7 frames arranged in a grid
   const row = Math.floor(frame / 3);
@@ -37,6 +37,8 @@ const Smoke = ({ x, y, frame }) => {
       />
     </div>
   );
-};
+});
+
+Smoke.displayName = 'Smoke';
 
 export default Smoke;

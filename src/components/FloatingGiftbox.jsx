@@ -1,7 +1,7 @@
 import React from 'react';
 import './FloatingGiftbox.css';
 
-const FloatingGiftbox = ({ x, y, showHitbox }) => {
+const FloatingGiftbox = React.memo(({ x, y, showHitbox }) => {
   return (
     <div
       className="floating-giftbox"
@@ -35,6 +35,8 @@ const FloatingGiftbox = ({ x, y, showHitbox }) => {
       )}
     </div>
   );
-};
+});
+
+FloatingGiftbox.displayName = 'FloatingGiftbox';
 
 export default FloatingGiftbox;

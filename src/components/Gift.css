@@ -1,5 +1,7 @@
 .gift {
   position: absolute;
+  left: 0;
+  top: 0;
   width: 60px;
   height: 60px;
   z-index: 8;
@@ -9,6 +11,10 @@
   justify-content: flex-start;
   animation: gift-fall 0.5s ease-in;
   pointer-events: none;
+  /* GPU acceleration */
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .gift img {

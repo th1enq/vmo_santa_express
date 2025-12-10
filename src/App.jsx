@@ -75,7 +75,7 @@ function App() {
   const [gameHeight, setGameHeight] = useState(900);
   const [showHitbox, setShowHitbox] = useState(false);
   const [pipeGap, setPipeGap] = useState(PIPE_GAP_DESKTOP);
-  const [enableSmoke, setEnableSmoke] = useState(true); // Enable smoke for all devices
+  const [enableSmoke, setEnableSmoke] = useState(!isMobile); // Disable smoke on mobile for performance
   
   const gameLoopRef = useRef(null);
   const pipeTimerRef = useRef(null);
@@ -453,32 +453,47 @@ function App() {
     }
   }, [gameStarted, gameOver, gameWidth]);
 
-  // Game loop
+  // Game loop - optimized for mobile performance
   useEffect(() => {
     if (gameStarted && !gameOver) {
-      gameLoopRef.current = setInterval(() => {
-        // Get current positions for collision detection
-        const currentSantaY = santaYRef.current;
-        const santaLeftPos = gameWidth * 0.15;
+      // Use requestAnimationFrame for better performance
+      // Target FPS: 60 for desktop, 50 for mobile (balanced performance and speed)
+      const targetFPS = isMobile ? 50 : 60;
+      const frameInterval = 1000 / targetFPS;
+      let lastFrameTime = performance.now();
+      let animationFrameId = null;
+      
+      const gameLoop = (currentTime) => {
+        const deltaTime = currentTime - lastFrameTime;
         
-        // Adjust Santa size and hitbox padding for mobile
-        const currentSantaSize = isMobile ? 80 : SANTA_SIZE;
-        const scaleFactor = isMobile ? 0.8 : 1;
+        // Throttle to target FPS but use deltaTime for consistent speed
+        if (deltaTime >= frameInterval) {
+          // Calculate speed multiplier based on actual frame time to maintain consistent speed
+          const speedMultiplier = deltaTime / (1000 / 60); // Normalize to 60 FPS speed
+          lastFrameTime = currentTime - (deltaTime % frameInterval);
+          
+          // Get current positions for collision detection
+          const currentSantaY = santaYRef.current;
+          const santaLeftPos = gameWidth * 0.15;
+          
+          // Adjust Santa size and hitbox padding for mobile
+          const currentSantaSize = isMobile ? 80 : SANTA_SIZE;
+          const scaleFactor = isMobile ? 0.8 : 1;
         
-        // Hitbox padding matching visual hitbox in Santa.css
-        const hitboxPaddingLeft = 20 * scaleFactor;   // 20px desktop, 16px mobile
-        const hitboxPaddingRight = 10 * scaleFactor;  // 10px desktop, 8px mobile
-        const hitboxPaddingTop = 20 * scaleFactor;    // 20px desktop, 16px mobile
-        const hitboxPaddingBottom = 10 * scaleFactor; // 10px desktop, 8px mobile
-        
-        const santaLeft = santaLeftPos + hitboxPaddingLeft;
-        const santaRight = santaLeftPos + currentSantaSize - hitboxPaddingRight;
-        const santaTop = currentSantaY + hitboxPaddingTop;
-        const santaBottom = currentSantaY + currentSantaSize - hitboxPaddingBottom;
+          // Hitbox padding matching visual hitbox in Santa.css
+          const hitboxPaddingLeft = 20 * scaleFactor;   // 20px desktop, 16px mobile
+          const hitboxPaddingRight = 10 * scaleFactor;  // 10px desktop, 8px mobile
+          const hitboxPaddingTop = 20 * scaleFactor;    // 20px desktop, 16px mobile
+          const hitboxPaddingBottom = 10 * scaleFactor; // 10px desktop, 8px mobile
+          
+          const santaLeft = santaLeftPos + hitboxPaddingLeft;
+          const santaRight = santaLeftPos + currentSantaSize - hitboxPaddingRight;
+          const santaTop = currentSantaY + hitboxPaddingTop;
+          const santaBottom = currentSantaY + currentSantaSize - hitboxPaddingBottom;
 
-        // Update santa position
-        setSantaY((y) => {
-          const newY = y + santaVelocity;
+          // Update santa position
+          setSantaY((y) => {
+          const newY = y + (santaVelocity * speedMultiplier);
           const groundHeight = 80;
           const groundLevel = gameHeight - groundHeight;
           
@@ -512,39 +527,39 @@ function App() {
             return -hitboxPaddingTop;
           }
           
-          return newY;
-        });
+            return newY;
+          });
 
-        // Update santa velocity
-        // Stop applying gravity when at ground level
-        const groundHeight = 80;
-        const groundLevel = gameHeight - groundHeight;
-        const santaBottomEdge = santaY + currentSantaSize - hitboxPaddingBottom;
-        
-        if (isDead && santaBottomEdge < groundLevel) {
-          setSantaVelocity((v) => v + GRAVITY);
-        } else if (!isDead && santaBottomEdge < groundLevel) {
-          setSantaVelocity((v) => v + GRAVITY);
-        } else {
-          // At ground, stop velocity
-          setSantaVelocity(0);
-        }
+          // Update santa velocity
+          // Stop applying gravity when at ground level
+          const groundHeight = 80;
+          const groundLevel = gameHeight - groundHeight;
+          const santaBottomEdge = santaY + currentSantaSize - hitboxPaddingBottom;
+          
+          if (isDead && santaBottomEdge < groundLevel) {
+            setSantaVelocity((v) => v + (GRAVITY * speedMultiplier));
+          } else if (!isDead && santaBottomEdge < groundLevel) {
+            setSantaVelocity((v) => v + (GRAVITY * speedMultiplier));
+          } else {
+            // At ground, stop velocity
+            setSantaVelocity(0);
+          }
 
-        // Update rotation based on velocity (handle death spin)
-        if (isDead) {
-          // Continuous spin when dead
-          setRotation((r) => r + 10);
-        } else {
-          const newRotation = Math.min(Math.max(santaVelocity * 5, -45), 45);
-          setRotation(newRotation);
-        }
+          // Update rotation based on velocity (handle death spin)
+          if (isDead) {
+            // Continuous spin when dead
+            setRotation((r) => r + 10);
+          } else {
+            const newRotation = Math.min(Math.max(santaVelocity * 5, -45), 45);
+            setRotation(newRotation);
+          }
 
-        // Update pipes position and check collision
-        setPipes((prevPipes) => {
+          // Update pipes position and check collision
+          setPipes((prevPipes) => {
           const updatedPipes = prevPipes
             .map((pipe) => ({
               ...pipe,
-              x: pipe.x - PIPE_SPEED,
+              x: pipe.x - (PIPE_SPEED * speedMultiplier),
             }))
             .filter((pipe) => pipe.x > -PIPE_WIDTH);
 
@@ -609,11 +624,11 @@ function App() {
             }
           });
 
-          return updatedPipes;
-        });
+            return updatedPipes;
+          });
 
-        // Update floating giftboxes position and check collision
-        setFloatingGiftboxes((prevGiftboxes) => {
+          // Update floating giftboxes position and check collision
+          setFloatingGiftboxes((prevGiftboxes) => {
           // Use same hitbox as main collision detection
           const giftboxSantaLeft = santaLeft;
           const giftboxSantaRight = santaRight;
@@ -624,7 +639,7 @@ function App() {
             .map((giftbox) => {
               const newGiftbox = {
                 ...giftbox,
-                x: giftbox.x - PIPE_SPEED,
+                x: giftbox.x - (PIPE_SPEED * speedMultiplier),
               };
               
               // Check collision with Santa
@@ -652,23 +667,23 @@ function App() {
               return newGiftbox;
             })
             .filter((giftbox) => giftbox && giftbox.x > -100); // Remove when off screen or collected
-        });
+          });
 
-        // Update decorations position
-        setDecors((prevDecors) => {
+          // Update decorations position
+          setDecors((prevDecors) => {
           return prevDecors
             .map((decor) => ({
               ...decor,
-              x: decor.x - PIPE_SPEED,
+              x: decor.x - (PIPE_SPEED * speedMultiplier),
             }))
             .filter((decor) => decor.x > -200); // Remove when off screen
-        });
+          });
 
-        // Update gifts position
-        setGifts((prevGifts) => {
+          // Update gifts position
+          setGifts((prevGifts) => {
           const updatedGifts = prevGifts.map((gift) => {
-            let newVelocityY = gift.velocityY + GIFT_GRAVITY;
-            let newY = gift.y + newVelocityY;
+            let newVelocityY = gift.velocityY + (GIFT_GRAVITY * speedMultiplier);
+            let newY = gift.y + (newVelocityY * speedMultiplier);
             let isBreaking = gift.isBreaking; // Keep existing breaking state
             let breakingTime = gift.breakingTime || 0;
 
@@ -717,10 +732,10 @@ function App() {
             }
             return gift.y < gameHeight + 100; // Allow some overflow
           });
-        });
+          });
 
-        // Update smoke animations
-        setSmokes((prevSmokes) => {
+          // Update smoke animations
+          setSmokes((prevSmokes) => {
           const now = Date.now();
           return prevSmokes
             .map((smoke) => {
@@ -732,16 +747,24 @@ function App() {
               };
             })
             .filter((smoke) => smoke.frame < 7); // Remove after 7 frames
-        });
-      }, 1000 / 60); // 60 FPS
+          });
+        }
+        
+        // Continue animation loop
+        animationFrameId = requestAnimationFrame(gameLoop);
+      };
+      
+      // Start the animation loop
+      animationFrameId = requestAnimationFrame(gameLoop);
+      gameLoopRef.current = animationFrameId;
 
       return () => {
-        if (gameLoopRef.current) {
-          clearInterval(gameLoopRef.current);
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
         }
       };
     }
-  }, [gameStarted, gameOver, santaVelocity, santaY, gameHeight, gameWidth, isDead]);
+  }, [gameStarted, gameOver, santaVelocity, santaY, gameHeight, gameWidth, isDead, isMobile, pipeGap, playSound]);
 
   const handlePlay = () => {
     setShowMainMenu(false);

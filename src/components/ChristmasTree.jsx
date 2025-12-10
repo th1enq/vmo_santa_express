@@ -1,7 +1,7 @@
 import React from 'react';
 import './ChristmasTree.css';
 
-const ChristmasTree = ({ treeX, gap, gameHeight, type, size, showHitbox = false }) => {
+const ChristmasTree = React.memo(({ treeX, gap, gameHeight, type, size, showHitbox = false }) => {
   // Determine height based on size (larger = taller, fills more gap)
   const heights = {
     small: 200,
@@ -52,6 +52,8 @@ const ChristmasTree = ({ treeX, gap, gameHeight, type, size, showHitbox = false 
       )}
     </div>
   );
-};
+});
+
+ChristmasTree.displayName = 'ChristmasTree';
 
 export default ChristmasTree;

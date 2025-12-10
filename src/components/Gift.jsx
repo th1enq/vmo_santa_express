@@ -1,7 +1,7 @@
 import React from 'react';
 import './Gift.css';
 
-const Gift = ({ giftX, giftY, spriteIndex, isBreaking }) => {
+const Gift = React.memo(({ giftX, giftY, spriteIndex, isBreaking }) => {
   // Calculate sprite position based on index
   // Grid is 4x4 (2048x2048):
   // Row 0-1: Intact gifts (8 gifts)
@@ -55,6 +55,8 @@ const Gift = ({ giftX, giftY, spriteIndex, isBreaking }) => {
       />
     </div>
   );
-};
+});
+
+Gift.displayName = 'Gift';
 
 export default Gift;

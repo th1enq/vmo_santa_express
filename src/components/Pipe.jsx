@@ -1,7 +1,7 @@
 import React from 'react';
 import './Pipe.css';
 
-const PipePair = ({ pipeX, topPipeHeight, gap, gameHeight, showHitbox = false }) => {
+const PipePair = React.memo(({ pipeX, topPipeHeight, gap, gameHeight, showHitbox = false }) => {
   return (
     <>
       {/* Top Pipe only */}
@@ -24,6 +24,8 @@ const PipePair = ({ pipeX, topPipeHeight, gap, gameHeight, showHitbox = false })
       </div>
     </>
   );
-};
+});
+
+PipePair.displayName = 'PipePair';
 
 export default PipePair;
