@@ -14,9 +14,22 @@ body {
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+}
+
+/* Desktop: center the game container */
+@media (min-width: 801px) {
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Mobile: no centering, full screen */
+@media (max-width: 800px) {
+  body {
+    display: block;
+  }
 }
 
 #root {

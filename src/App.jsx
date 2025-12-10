@@ -111,14 +111,36 @@ function App() {
     }
   }, []);
 
-  // Use fixed game dimensions - no dynamic resizing
+  // Use fixed game dimensions for desktop, dynamic for mobile
   useEffect(() => {
-    // Set fixed dimensions
-    setGameWidth(FIXED_GAME_WIDTH);
-    setGameHeight(FIXED_GAME_HEIGHT);
+    const updateDimensions = () => {
+      if (isMobile || window.innerWidth <= 800) {
+        // Mobile: use full screen dimensions
+        const screenHeight = window.innerHeight;
+        setGameWidth(window.innerWidth);
+        setGameHeight(screenHeight);
+        // Mobile: gap as percentage of screen height
+        // Desktop ratio: 200/750 = 26.7%, but mobile should be easier
+        // Use 18% for mobile (more forgiving)
+        const calculatedGap = Math.round(screenHeight * 0.25);
+        // Clamp gap between 120 and 200 to ensure playability
+        const finalGap = Math.max(120, Math.min(200, calculatedGap));
+        setPipeGap(finalGap);
+        console.log(`Mobile - Screen Height: ${screenHeight}, Gap: ${finalGap} (${((finalGap/screenHeight)*100).toFixed(1)}%)`);
+      } else {
+        // Desktop: use fixed dimensions
+        setGameWidth(FIXED_GAME_WIDTH);
+        setGameHeight(FIXED_GAME_HEIGHT);
+        // Desktop: gap as percentage of fixed height (26.7% of 750 = 200)
+        setPipeGap(200);
+        console.log(`Desktop - Height: ${FIXED_GAME_HEIGHT}, Gap: 200 (26.7%)`);
+      }
+    };
     
-    // Use fixed gap size of 200px for all devices
-    setPipeGap(200);
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    
+    return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
   // Save high score
@@ -270,24 +292,32 @@ function App() {
           const treeHeight = treeHeights[treeSize];
           const groundHeight = 80;
           
-          // Fixed gap size - always 200px to ensure consistent spacing
-          const FIXED_GAP_SIZE = 200;
+          // Use dynamic gap from state instead of fixed value
+          const currentGap = pipeGap;
           
           // Calculate tree top position (from top of screen)
-          // Use fixed gameHeight to ensure consistent calculations across all devices
-          const currentGameHeight = FIXED_GAME_HEIGHT;
+          // Use current gameHeight to ensure proper calculations
+          const currentGameHeight = gameHeight;
           const treeTopY = currentGameHeight - groundHeight - treeHeight;
           
           // Pipe top height = tree top - gap
-          // This ensures gap is always exactly FIXED_GAP_SIZE regardless of tree size
+          // This ensures gap is always exactly currentGap regardless of tree size
           // Calculate pipe height to maintain exact gap
-          const height = treeTopY - FIXED_GAP_SIZE;
+          const height = treeTopY - currentGap;
+          
+          // Safety check: ensure pipe height is not negative
+          if (height < 0) {
+            console.error(`Invalid pipe height: ${height}. Skipping pipe generation.`);
+            return prevPipes;
+          }
+          
+          console.log(`Pipe spawn - gameHeight: ${currentGameHeight}, gap: ${currentGap}, treeSize: ${treeSize}, treeHeight: ${treeHeight}, pipeHeight: ${height}, treeTopY: ${treeTopY}`);
           
           // Validate calculations
-          const pipeBottom = height + FIXED_GAP_SIZE;
+          const pipeBottom = height + currentGap;
           const treeTop = currentGameHeight - groundHeight - treeHeight;
           
-          // Ensure gap is exactly FIXED_GAP_SIZE
+          // Ensure gap is exactly currentGap
           if (Math.abs(pipeBottom - treeTop) > 1) {
             console.warn(`Gap mismatch: pipeBottom=${pipeBottom}, treeTop=${treeTop}, gap=${pipeBottom - treeTop}`);
           }
@@ -306,7 +336,7 @@ function App() {
           
           // Spawn floating giftbox in the gap
           if (shouldSpawnGiftbox) {
-            const giftboxY = height + FIXED_GAP_SIZE / 2 - 30; // Center in gap
+            const giftboxY = height + currentGap / 2 - 30; // Center in gap
             const randomOffset = Math.random() * 40 - 20; // Random offset ±20px
             
             setFloatingGiftboxes((prev) => [
@@ -328,7 +358,7 @@ function App() {
       const firstPipeTimeout = setTimeout(generatePipe, 1500);
 
       // Check for new pipes regularly
-      pipeTimerRef.current = setInterval(generatePipe, 200); // Check every 200ms
+      pipeTimerRef.current = setInterval(generatePipe, 220); // Check every 200ms
 
       return () => {
         clearTimeout(firstPipeTimeout);
@@ -337,7 +367,7 @@ function App() {
         }
       };
     }
-  }, [gameStarted, gameOver, gameWidth, gameHeight]);
+  }, [gameStarted, gameOver, gameWidth, gameHeight, pipeGap]);
 
   // Generate decorations (similar to pipes)
   useEffect(() => {

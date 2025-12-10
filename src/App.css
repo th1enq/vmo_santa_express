@@ -36,13 +36,16 @@
   }
 }
 
-/* Mobile: scale down if needed but maintain aspect ratio */
-@media (max-width: 768px) {
+/* Mobile: full screen */
+@media (max-width: 800px) {
   .game-container {
     width: 100vw;
-    height: 150vw; /* Maintain 500:750 = 2:3 aspect ratio */
-    max-width: 500px;
-    max-height: 750px;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    border: none;
+    box-shadow: none;
+    margin-top: 0;
   }
 }
 
