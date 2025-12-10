@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './EnterID.css';
 
 const EnterID = ({ onSubmit, onCancel }) => {
   const [vmoId, setVmoId] = useState('');
   const [cursorVisible, setCursorVisible] = useState(true);
   const [showWarning, setShowWarning] = useState(false);
+  const inputRef = useRef(null);
   const MAX_LENGTH = 4;
 
   // Blinking cursor effect
@@ -89,10 +90,51 @@ const EnterID = ({ onSubmit, onCancel }) => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
+  // Handle hidden input change (for mobile keyboard)
+  const handleInputChange = (e) => {
+    const value = e.target.value.replace(/[^0-9]/g, '').slice(0, MAX_LENGTH);
+    setVmoId(value);
+    setShowWarning(false);
+  };
+
+  // Handle hidden input keydown (for Enter key on mobile)
+  const handleInputKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (vmoId.trim().length === MAX_LENGTH) {
+        onSubmit(vmoId.trim());
+      } else {
+        setShowWarning(true);
+        setTimeout(() => setShowWarning(false), 2000);
+      }
+    }
+  };
+
+  // Focus input when clicking on the input area
+  const handleInputAreaClick = () => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
   return (
     <div className="enter-id-overlay">
       <div className="enter-id-container">
-        <div className="bitmap-text-container">
+        {/* Hidden input for mobile keyboard */}
+        <input
+          ref={inputRef}
+          type="tel"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          value={vmoId}
+          onChange={handleInputChange}
+          onKeyDown={handleInputKeyDown}
+          className="hidden-input"
+          autoComplete="off"
+          maxLength={MAX_LENGTH}
+        />
+        
+        <div className="bitmap-text-container" onClick={handleInputAreaClick}>
           <div className="bitmap-line">
             {renderText('ENTER YOUR VMO_ID')}
           </div>

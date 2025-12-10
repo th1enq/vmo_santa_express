@@ -241,21 +241,32 @@ function App() {
   // Generate pipes
   useEffect(() => {
     if (gameStarted && !gameOver) {
+      // Use a ref to track last spawn time to ensure consistent spacing
+      let lastSpawnTime = Date.now();
+      const minSpawnInterval = 2000; // Minimum 2 seconds between spawns
+      
       const generatePipe = () => {
+        const now = Date.now();
+        
+        // Check time-based spawn interval
+        if (now - lastSpawnTime < minSpawnInterval) {
+          return;
+        }
+        
         setPipes((prevPipes) => {
-          // Check if we should spawn a new pipe
-          // Only spawn if last pipe has moved far enough
-          const minDistance = 300; // Minimum distance between pipes
+          // Additional distance check - ensure last pipe has moved far enough from spawn point
+          const minDistance = 250; // Minimum distance from right edge
           
           if (prevPipes.length > 0) {
             const lastPipe = prevPipes[prevPipes.length - 1];
-            const distanceFromRight = gameWidth - lastPipe.x;
-            
-            // If last pipe hasn't moved far enough, don't spawn
-            if (distanceFromRight < minDistance) {
-              return prevPipes;
+            // Check actual position - pipe should be at least minDistance away from right edge
+            if (lastPipe.x > gameWidth - minDistance) {
+              return prevPipes; // Don't spawn yet
             }
           }
+          
+          // Update spawn time
+          lastSpawnTime = now;
           
           // Random tree properties first
           const types = ['fantasy', 'green', 'greenTeal'];
@@ -313,13 +324,14 @@ function App() {
         });
       };
 
-      // Generate first pipe immediately
-      generatePipe();
+      // Generate first pipe after a delay
+      const firstPipeTimeout = setTimeout(generatePipe, 1500);
 
-      // Check for new pipes more frequently, but generatePipe will decide if spawn is needed
-      pipeTimerRef.current = setInterval(generatePipe, 100); // Check every 100ms
+      // Check for new pipes regularly
+      pipeTimerRef.current = setInterval(generatePipe, 200); // Check every 200ms
 
       return () => {
+        clearTimeout(firstPipeTimeout);
         if (pipeTimerRef.current) {
           clearInterval(pipeTimerRef.current);
         }
