@@ -72,8 +72,11 @@ function App() {
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [isDead, setIsDead] = useState(false);
-  const [gameWidth, setGameWidth] = useState(800);
-  const [gameHeight, setGameHeight] = useState(900);
+  // Fixed game dimensions to prevent layout issues across devices
+  const FIXED_GAME_WIDTH = 500;
+  const FIXED_GAME_HEIGHT = 750;
+  const [gameWidth, setGameWidth] = useState(FIXED_GAME_WIDTH);
+  const [gameHeight, setGameHeight] = useState(FIXED_GAME_HEIGHT);
   const [showHitbox, setShowHitbox] = useState(false);
   const [pipeGap, setPipeGap] = useState(PIPE_GAP_DESKTOP);
   const [enableSmoke, setEnableSmoke] = useState(!isMobile); // Disable smoke on mobile for performance
@@ -108,29 +111,14 @@ function App() {
     }
   }, []);
 
-  // Measure game container size
+  // Use fixed game dimensions - no dynamic resizing
   useEffect(() => {
-    const updateGameSize = () => {
-      if (gameContainerRef.current) {
-        const rect = gameContainerRef.current.getBoundingClientRect();
-        setGameWidth(rect.width);
-        setGameHeight(rect.height);
-        
-        // Adjust pipe gap based on screen width
-        if (rect.width < 500) {
-          setPipeGap(PIPE_GAP_MOBILE); // Easier on small screens
-        } else {
-          setPipeGap(PIPE_GAP_DESKTOP);
-        }
-      }
-    };
+    // Set fixed dimensions
+    setGameWidth(FIXED_GAME_WIDTH);
+    setGameHeight(FIXED_GAME_HEIGHT);
     
-    updateGameSize();
-    window.addEventListener('resize', updateGameSize);
-    
-    return () => {
-      window.removeEventListener('resize', updateGameSize);
-    };
+    // Use fixed gap size of 200px for all devices
+    setPipeGap(200);
   }, []);
 
   // Save high score
@@ -282,17 +270,27 @@ function App() {
           const treeHeight = treeHeights[treeSize];
           const groundHeight = 80;
           
-          // Detect mobile device
-          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
-          const gapSize = isMobile ? 210 : 210; // Mobile: 155, Desktop: 180
+          // Fixed gap size - always 200px to ensure consistent spacing
+          const FIXED_GAP_SIZE = 200;
           
           // Calculate tree top position (from top of screen)
-          const treeTopY = gameHeight - groundHeight - treeHeight;
+          // Use fixed gameHeight to ensure consistent calculations across all devices
+          const currentGameHeight = FIXED_GAME_HEIGHT;
+          const treeTopY = currentGameHeight - groundHeight - treeHeight;
           
           // Pipe top height = tree top - gap
-          // This ensures gap is always exactly same size regardless of tree size
-          // Ensure minimum height to prevent pipes from disappearing
-          const height = Math.max(50, treeTopY - gapSize);
+          // This ensures gap is always exactly FIXED_GAP_SIZE regardless of tree size
+          // Calculate pipe height to maintain exact gap
+          const height = treeTopY - FIXED_GAP_SIZE;
+          
+          // Validate calculations
+          const pipeBottom = height + FIXED_GAP_SIZE;
+          const treeTop = currentGameHeight - groundHeight - treeHeight;
+          
+          // Ensure gap is exactly FIXED_GAP_SIZE
+          if (Math.abs(pipeBottom - treeTop) > 1) {
+            console.warn(`Gap mismatch: pipeBottom=${pipeBottom}, treeTop=${treeTop}, gap=${pipeBottom - treeTop}`);
+          }
           
           // 50% chance to spawn a floating giftbox between pipes
           const shouldSpawnGiftbox = Math.random() > 0.5;
@@ -308,7 +306,7 @@ function App() {
           
           // Spawn floating giftbox in the gap
           if (shouldSpawnGiftbox) {
-            const giftboxY = height + gapSize / 2 - 30; // Center in gap
+            const giftboxY = height + FIXED_GAP_SIZE / 2 - 30; // Center in gap
             const randomOffset = Math.random() * 40 - 20; // Random offset ±20px
             
             setFloatingGiftboxes((prev) => [
