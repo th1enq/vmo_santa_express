@@ -66,6 +66,11 @@ const EnterID = ({ onSubmit, onCancel }) => {
   };
 
   const handleKeyDown = useCallback((e) => {
+    // Skip if the hidden input is focused (mobile keyboard is active)
+    if (document.activeElement === inputRef.current) {
+      return;
+    }
+    
     if (e.key === 'Enter') {
       if (vmoId.trim().length === MAX_LENGTH) {
         onSubmit(vmoId.trim());
