@@ -115,11 +115,36 @@ const EnterID = ({ onSubmit, onCancel }) => {
     }
   };
 
-  // Focus input when clicking on the input area
-  const handleInputAreaClick = () => {
+  // Focus input when clicking on the input area only
+  const handleInputAreaClick = (e) => {
+    e.stopPropagation();
     if (inputRef.current) {
       inputRef.current.focus();
     }
+  };
+
+  // Handle confirm button click
+  const handleConfirmClick = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    // Blur input first to ensure state is updated
+    if (inputRef.current) {
+      inputRef.current.blur();
+    }
+    
+    // Use a small timeout to ensure state is synced
+    setTimeout(() => {
+      const currentValue = inputRef.current ? inputRef.current.value : vmoId;
+      const cleanValue = currentValue.replace(/[^0-9]/g, '').trim();
+      
+      if (cleanValue.length === MAX_LENGTH) {
+        onSubmit(cleanValue);
+      } else {
+        setShowWarning(true);
+        setTimeout(() => setShowWarning(false), 2000);
+      }
+    }, 50);
   };
 
   return (
@@ -139,12 +164,12 @@ const EnterID = ({ onSubmit, onCancel }) => {
           maxLength={MAX_LENGTH}
         />
         
-        <div className="bitmap-text-container" onClick={handleInputAreaClick}>
+        <div className="bitmap-text-container">
           <div className="bitmap-line">
             {renderText('ENTER YOUR VMO_ID')}
           </div>
           
-          <div className="bitmap-input-line">
+          <div className="bitmap-input-line" onClick={handleInputAreaClick}>
             <div className="bitmap-input-display">
               {renderText(vmoId)}
               {vmoId.length < MAX_LENGTH && (
@@ -164,8 +189,8 @@ const EnterID = ({ onSubmit, onCancel }) => {
           </div>
           
           <div className="bitmap-button-hints">
-            <div className="bitmap-line">
-              {renderText('ENTER: CONFIRM')}
+            <div className="bitmap-line confirm-button" onClick={handleConfirmClick}>
+              {renderText('CONFIRM')}
             </div>
             {showWarning && (
               <div className="bitmap-line warning-text">
