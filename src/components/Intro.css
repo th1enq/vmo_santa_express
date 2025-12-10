@@ -69,7 +69,7 @@
 .intro-card {
   position: relative;
   width: min(95vw, calc(900px * var(--game-scale, 1)));
-  aspect-ratio: 1.1;
+  aspect-ratio: 1095 / 1280;
   background-image: url('/assets/window1.png');
   background-size: contain;
   background-repeat: no-repeat;
@@ -90,7 +90,7 @@
 
 .dialog-bubble {
   position: absolute;
-  top: 5%;
+  top: 15%;
   right: 15%;
   width: min(60%, calc(620px * var(--game-scale, 1)));
   height: auto;
@@ -100,7 +100,7 @@
 
 .dialog-text-box {
   position: absolute;
-  top: -5%;
+  top: 5%;
   right: 20%;
   left: 30%;
   bottom: 34%;
@@ -120,7 +120,7 @@
   position: absolute;
   left: 12%;
   bottom: 0%;
-  width: min(calc(250px * var(--game-scale, 1)), 44vw);
+  width: min(calc(320px * var(--game-scale, 1)), 44vw);
   height: auto;
   object-fit: contain;
   pointer-events: none;
@@ -140,7 +140,7 @@
 .skip-button {
   position: absolute;
   bottom: 9%;
-  right: 22%;
+  right: 15%;
   background: none;
   border: none;
   padding: 0;
@@ -169,7 +169,7 @@
 @media (max-width: 768px) {
   .intro-card {
     width: 95vw;
-    aspect-ratio: 1;
+    aspect-ratio: 1095 / 1335;
   }
 
   .dialog-bubble {
@@ -180,16 +180,16 @@
 
   .dialog-text-box {
     top: 0%;
-    left: 21%;
-    right: 12%;
-    bottom: 32%;
-    font-size: calc(13px * var(--game-scale, 1));
+    left: 25%;
+    right: 20%;
+    bottom: 40%;
+    font-size: calc(15px * var(--game-scale, 1));
   }
 
   .intro-santa {
     left: 5%;
     bottom: 0%;
-    width: min(calc(280px * var(--game-scale, 1)), 48vw);
+    width: min(calc(330px * var(--game-scale, 1)), 90vw);
   }
 
   .skip-button {

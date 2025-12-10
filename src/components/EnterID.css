@@ -89,12 +89,13 @@
   height: 95%;
   max-height: 95%;
   aspect-ratio: 1095 / 1335;
-  background-image: url('/assets/window2.png');
+  background-image: url('/assets/window1.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
   padding: 12% 8%;
   box-sizing: border-box;
+  width: min(95vw, calc(900px * var(--game-scale, 1)));
 }
 
 .vmo-id-label {
@@ -138,9 +139,21 @@
 .hidden-input {
   position: absolute;
   opacity: 0;
-  pointer-events: none;
   width: 1px;
   height: 1px;
+  /* Allow pointer events on mobile to trigger keyboard */
+  pointer-events: auto;
+  /* Ensure input is focusable on mobile */
+  font-size: 16px; /* Prevents zoom on iOS */
+  /* Make it larger but invisible for mobile browsers */
+  min-width: 44px;
+  min-height: 44px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  /* Ensure input is accessible for touch */
+  touch-action: manipulation;
 }
 
 .digit-image-display {

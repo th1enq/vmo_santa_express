@@ -988,12 +988,14 @@ function App() {
     document.documentElement.style.setProperty('--reference-height', `${REFERENCE_HEIGHT}px`);
   }, [scale, scaleX, scaleY, gameWidth, gameHeight]);
 
-  // Start background music from loading screen
+  // Start background music when game starts
   useEffect(() => {
-    if (!showLoading) {
+    if (gameStarted && !gameOver) {
       bgMusicRef.current.play().catch(err => console.log('Background music play failed:', err));
+    } else if (gameOver) {
+      bgMusicRef.current.pause();
     }
-  }, [showLoading]);
+  }, [gameStarted, gameOver]);
 
   return (
     <>
