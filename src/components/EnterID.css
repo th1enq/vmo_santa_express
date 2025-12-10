@@ -79,23 +79,20 @@
 }
 
 .enter-id-content {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: calc(30px * var(--game-scale, 1));
-  width: 95%;
-  max-width: 95%;
-  height: 95%;
-  max-height: 95%;
+  width: min(95vw, calc(480px * var(--game-scale, 1)));
   aspect-ratio: 1095 / 1335;
   background-image: url('/assets/window1.png');
-  background-size: contain;
+  background-size: 100% 100%;
   background-repeat: no-repeat;
   background-position: center;
   padding: 12% 8%;
   box-sizing: border-box;
-  width: min(95vw, calc(900px * var(--game-scale, 1)));
 }
 
 .vmo-id-label {
@@ -239,7 +236,7 @@
   .enter-id-content {
     width: 98%;
     max-width: 98%;
-    height: 98%;
+    height: 50%;
     max-height: 98%;
     padding: 10% 6%;
   }

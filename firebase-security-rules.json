@@ -1,0 +1,31 @@
+{
+  "rules": {
+    "leaderboard": {
+      ".read": true,
+      "$vmoId": {
+        ".write": "newData.hasChildren(['vmoId', 'score', 'updatedAt']) && newData.child('vmoId').isString() && newData.child('vmoId').val().matches(/^[A-Z0-9]{1,10}$/) && newData.child('score').isNumber() && newData.child('score').val() >= 0 && newData.child('score').val() <= 10000 && newData.child('updatedAt').isNumber() && (!data.exists() || newData.child('score').val() > data.child('score').val()) && (!data.exists() || newData.child('score').val() <= data.child('score').val() + 1000)",
+        "vmoId": {
+          ".validate": "newData.isString() && newData.val().matches(/^[A-Z0-9]{1,10}$/)"
+        },
+        "score": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000"
+        },
+        "updatedAt": {
+          ".validate": "newData.isNumber() && newData.val() > 0"
+        },
+        "pipesPassed": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "playTimeSeconds": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "hash": {
+          ".validate": "newData.isString()"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    }
+  }
+}

@@ -13,6 +13,7 @@ import FloatingGiftbox from './components/FloatingGiftbox';
 import EnterID from './components/EnterID';
 import LoadingScreen from './components/LoadingScreen';
 import LeaderboardOverlay from './components/LeaderboardOverlay';
+import { savePlayerScore, getTop10Leaderboard, getPlayerHighScore } from './services/firebaseService';
 import './App.css';
 
 // Audio files
@@ -86,6 +87,8 @@ function App() {
   const [enableSmoke, setEnableSmoke] = useState(!isMobile); // Disable smoke on mobile for performance
   const [leaderboard, setLeaderboard] = useState([]);
   const hasRecordedScoreRef = useRef(false);
+  const gameStartTimeRef = useRef(null);
+  const pipesPassedRef = useRef(0);
   
   // Calculate scale factors based on current game dimensions
   const scaleX = gameWidth / REFERENCE_WIDTH;
@@ -123,19 +126,21 @@ function App() {
     }
   }, [gameHeight, gameStarted, gameOver]);
 
-  // Load high score from localStorage
+  // Load leaderboard từ Firebase
+  const loadLeaderboard = useCallback(async () => {
+    try {
+      const top10 = await getTop10Leaderboard();
+      setLeaderboard(top10);
+    } catch (error) {
+      setLeaderboard([]);
+    }
+  }, []);
+
+  // Load high score from localStorage (local high score vẫn lưu local)
   useEffect(() => {
     const savedHighScore = localStorage.getItem('santaFlappyHighScore');
     if (savedHighScore) {
       setHighScore(parseInt(savedHighScore, 10));
-    }
-    const savedBoard = localStorage.getItem('santaFlappyLeaderboard');
-    if (savedBoard) {
-      try {
-        setLeaderboard(JSON.parse(savedBoard));
-      } catch (e) {
-        console.warn('Failed to parse leaderboard:', e);
-      }
     }
   }, []);
 
@@ -192,23 +197,64 @@ function App() {
     }
   }, [score, highScore]);
 
+  // Lưu điểm vào Firebase khi game over với validation và load high score
   useEffect(() => {
-    if (gameOver && !hasRecordedScoreRef.current) {
-      const entry = {
-        id: Date.now(),
-        vmoId: vmoId || '----',
-        score
+    if (gameOver && !hasRecordedScoreRef.current && vmoId && vmoId.trim() !== '') {
+      // Tính thời gian chơi
+      const playTimeSeconds = gameStartTimeRef.current 
+        ? Math.floor((Date.now() - gameStartTimeRef.current) / 1000)
+        : 0;
+      
+      // Tạo game state để validate
+      const gameState = {
+        gameStarted,
+        gameOver,
+        pipesPassed: pipesPassedRef.current,
+        playTimeSeconds,
+        isDead
       };
-      const merged = [...leaderboard, entry]
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 10);
-      setLeaderboard(merged);
-      localStorage.setItem('santaFlappyLeaderboard', JSON.stringify(merged));
+      
+      // Query điểm cao nhất từ Firebase
+      getPlayerHighScore(vmoId)
+        .then((firebaseHighScore) => {
+          // Lấy điểm cao nhất giữa Firebase và score hiện tại
+          const bestScore = Math.max(firebaseHighScore || 0, score);
+          setHighScore(bestScore);
+        })
+        .catch(() => {
+          // Nếu lỗi, dùng score hiện tại
+          setHighScore(score);
+        });
+      
+      // Lưu điểm mới vào Firebase
+      savePlayerScore(vmoId, score, gameState)
+        .then((result) => {
+          if (result.success) {
+            // Load lại leaderboard sau khi lưu thành công
+            loadLeaderboard();
+            // Load lại high score sau khi lưu để cập nhật
+            getPlayerHighScore(vmoId)
+              .then((firebaseHighScore) => {
+                if (firebaseHighScore > 0) {
+                  setHighScore(firebaseHighScore);
+                }
+              })
+              .catch(() => {});
+          }
+        })
+        .catch(() => {});
       hasRecordedScoreRef.current = true;
     } else if (!gameOver) {
       hasRecordedScoreRef.current = false;
     }
-  }, [gameOver, score, vmoId, leaderboard]);
+  }, [gameOver, score, vmoId, loadLeaderboard, gameStarted, isDead]);
+
+  // Load leaderboard khi mở leaderboard overlay
+  useEffect(() => {
+    if (showLeaderboard) {
+      loadLeaderboard();
+    }
+  }, [showLeaderboard, loadLeaderboard]);
 
   const resetGame = useCallback(() => {
       playSound('swoosh');
@@ -223,8 +269,10 @@ function App() {
       setScore(0);
       setGameOver(false);
       setGameStarted(false);
-    setShowLeaderboard(false);
+      setShowLeaderboard(false);
       scoredPipesRef.current.clear();
+      gameStartTimeRef.current = null;
+      pipesPassedRef.current = 0;
   }, [gameHeight, playSound]);
 
   const jump = useCallback(() => {
@@ -239,6 +287,8 @@ function App() {
     
     if (!gameStarted) {
       setGameStarted(true);
+      gameStartTimeRef.current = Date.now();
+      pipesPassedRef.current = 0;
       playSound('wing');
       setSantaVelocity(scaledJumpStrength);
       // Add smoke effect (disabled on mobile for performance)
@@ -731,6 +781,7 @@ function App() {
             const santaCenter = santaLeftPos + currentSantaSize / 2;
             if (!scoredPipesRef.current.has(pipe.id) && santaCenter > pipeRight) {
               scoredPipesRef.current.add(pipe.id);
+              pipesPassedRef.current += 1;
               playSound('point');
               setScore((s) => s + 1);
             }

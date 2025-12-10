@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { sanitizeString } from '../utils/security';
 import './LeaderboardOverlay.css';
 
 const LeaderboardOverlay = ({ entries = [], onClose }) => {
@@ -105,20 +106,21 @@ const LeaderboardOverlay = ({ entries = [], onClose }) => {
           )}
 
           {currentEntries.map((item, index) => {
-            const idText = `${(item.vmoId || '----').toString().toUpperCase()}`;
-            const scoreText = (item.score ?? 0).toString();
+            // Sanitize để chống XSS
+            const sanitizedVmoId = sanitizeString((item.vmoId || '----').toString().toUpperCase());
+            const sanitizedScore = sanitizeString((item.score ?? 0).toString());
             const rankNumber = startIndex + index + 1;
-            const rankText = `${rankNumber}.`;
+            const sanitizedRank = sanitizeString(`${rankNumber}.`);
             return (
               <div className="leaderboard-row" key={item.id ?? index}>
                 <span className="lb-rank ka1-font" aria-label={`Rank ${rankNumber}`}>
-                  <span className="score-value-ka1">{rankText}</span>
+                  <span className="score-value-ka1">{sanitizedRank}</span>
                 </span>
                 <span className="lb-id ka1-font">
-                  <span className="score-value-ka1">{idText}</span>
+                  <span className="score-value-ka1">{sanitizedVmoId}</span>
                 </span>
                 <span className="lb-score ka1-font">
-                  <span className="score-value-ka1">{scoreText}</span>
+                  <span className="score-value-ka1">{sanitizedScore}</span>
                 </span>
               </div>
             );
