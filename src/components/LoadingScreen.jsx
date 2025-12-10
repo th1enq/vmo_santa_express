@@ -59,21 +59,21 @@ const LoadingScreen = ({ onComplete }) => {
 
   return (
     <div className="loading-screen-wrapper">
-      <div className="loading-screen" style={{ cursor: loaded ? 'pointer' : 'default' }}>
-        <div className="snowflakes">
-          {snowflakes.map((flake, i) => (
-            <div
-              key={i}
-              className="snowflake"
-              style={{
-                left: flake.left,
-                animationDelay: flake.delay,
-                animationDuration: flake.duration,
-              }}
-            />
-          ))}
-        </div>
-        <div className="loading-content">
+    <div className="loading-screen" style={{ cursor: loaded ? 'pointer' : 'default' }}>
+      <div className="snowflakes">
+        {snowflakes.map((flake, i) => (
+          <div
+            key={i}
+            className="snowflake"
+            style={{
+              left: flake.left,
+              animationDelay: flake.delay,
+              animationDuration: flake.duration,
+            }}
+          />
+        ))}
+      </div>
+      <div className="loading-content">
         <img 
           src="/assets/santa_express.png" 
           alt="Santa Express Game Title" 

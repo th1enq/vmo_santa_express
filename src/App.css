@@ -1,9 +1,31 @@
+.game-wrapper {
+  position: fixed;
+  inset: 0;
+  background-image: url('/assets/bg_loading.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.game-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1;
+}
+
 .game-container {
   /* Dimensions set via inline style from App.jsx */
+  position: relative;
   max-width: 100%;
   max-height: 100vh;
   margin: 0 auto;
-  position: relative;
   overflow: hidden;
   background-image: url('/assets/bg_loading.png');
   background-size: cover;
@@ -11,6 +33,8 @@
   background-repeat: no-repeat;
   cursor: pointer;
   transition: opacity 0.3s ease, visibility 0.3s ease;
+  z-index: 2;
+  box-shadow: 0 0 calc(30px * var(--scale, 1)) rgba(0, 0, 0, 0.5);
 }
 
 .game-over-darken {
@@ -64,14 +88,11 @@
 /* Desktop: center game with responsive size */
 @media (min-width: 801px) {
   .game-container {
-    margin-top: calc((100vh - var(--game-height, 750px)) / 2);
     border: calc(3px * var(--scale, 1)) solid #333;
-    box-shadow: 0 0 calc(30px * var(--scale, 1)) rgba(0, 0, 0, 0.5);
   }
   
   .game-container.intro-active {
     border: none;
-    box-shadow: none;
   }
 }
 
@@ -81,8 +102,6 @@
     max-width: 100vw;
     max-height: 100vh;
     border: none;
-    box-shadow: none;
-    margin-top: 0;
   }
 }
 

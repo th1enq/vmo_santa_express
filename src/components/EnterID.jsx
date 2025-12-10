@@ -171,21 +171,21 @@ const EnterID = ({ onSubmit, onCancel }) => {
 
   return (
     <div className="enter-id-wrapper">
-      <div className="enter-id-overlay">
-        <div className="snowflakes">
-          {snowflakes.map((flake, i) => (
-            <div
-              key={i}
-              className="snowflake"
-              style={{
-                left: flake.left,
-                animationDelay: flake.delay,
-                animationDuration: flake.duration,
-              }}
-            />
-          ))}
-        </div>
-        <div className="enter-id-container">
+    <div className="enter-id-overlay">
+      <div className="snowflakes">
+        {snowflakes.map((flake, i) => (
+          <div
+            key={i}
+            className="snowflake"
+            style={{
+              left: flake.left,
+              animationDelay: flake.delay,
+              animationDuration: flake.duration,
+            }}
+          />
+        ))}
+      </div>
+      <div className="enter-id-container">
         <div className="enter-id-content">
           <img 
             src="/assets/vmo_id.png" 

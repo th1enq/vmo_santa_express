@@ -211,20 +211,20 @@ function App() {
   }, [gameOver, score, vmoId, leaderboard]);
 
   const resetGame = useCallback(() => {
-    playSound('swoosh');
-    setSantaY(gameHeight * 0.4);
-    setSantaVelocity(0);
-    setRotation(0);
-    setIsDead(false);
-    setPipes([]);
-    setGifts([]);
-    setSmokes([]);
-    setDecors([]);
-    setScore(0);
-    setGameOver(false);
-    setGameStarted(false);
+      playSound('swoosh');
+      setSantaY(gameHeight * 0.4);
+      setSantaVelocity(0);
+      setRotation(0);
+      setIsDead(false);
+      setPipes([]);
+      setGifts([]);
+      setSmokes([]);
+      setDecors([]);
+      setScore(0);
+      setGameOver(false);
+      setGameStarted(false);
     setShowLeaderboard(false);
-    scoredPipesRef.current.clear();
+      scoredPipesRef.current.clear();
   }, [gameHeight, playSound]);
 
   const jump = useCallback(() => {
@@ -988,15 +988,22 @@ function App() {
     document.documentElement.style.setProperty('--reference-height', `${REFERENCE_HEIGHT}px`);
   }, [scale, scaleX, scaleY, gameWidth, gameHeight]);
 
+  // Start background music from loading screen
+  useEffect(() => {
+    if (!showLoading) {
+      bgMusicRef.current.play().catch(err => console.log('Background music play failed:', err));
+    }
+  }, [showLoading]);
+
   return (
     <>
       {/* Global branch logo for non-game screens */}
       {(showLoading || showIntro || showEnterID || showMainMenu) && (
-        <img
-          src="/assets/branch.png"
-          alt="Branch logo"
+      <img
+        src="/assets/branch.png"
+        alt="Branch logo"
           className="branch-logo-global"
-        />
+      />
       )}
 
       {showLeaderboard && (
@@ -1037,19 +1044,20 @@ function App() {
         }}
       />}
       
-      <div 
-        className={`game-container ${showLoading || showIntro || showEnterID || showMainMenu ? 'intro-active' : ''}`} 
-        ref={gameContainerRef}
-        style={{
-          '--scale': scale,
-          '--scale-x': scaleX,
-          '--scale-y': scaleY,
-          '--game-width': `${gameWidth}px`,
-          '--game-height': `${gameHeight}px`,
-          width: `${gameWidth}px`,
-          height: `${gameHeight}px`,
-        }}
-      >
+      <div className="game-wrapper">
+        <div 
+          className={`game-container ${showLoading || showIntro || showEnterID || showMainMenu ? 'intro-active' : ''}`} 
+          ref={gameContainerRef}
+          style={{
+            '--scale': scale,
+            '--scale-x': scaleX,
+            '--scale-y': scaleY,
+            '--game-width': `${gameWidth}px`,
+            '--game-height': `${gameHeight}px`,
+            width: `${gameWidth}px`,
+            height: `${gameHeight}px`,
+          }}
+        >
         {/* Branch logo anchored to game window only during play */}
         <img
           src="/assets/branch.png"
@@ -1155,7 +1163,8 @@ function App() {
       ))}
 
       <Ground gameWidth={gameWidth} gameStarted={gameStarted} gameOver={gameOver} />
-    </div>
+        </div>
+      </div>
     </>
   );
 }

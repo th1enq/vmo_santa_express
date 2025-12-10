@@ -74,18 +74,18 @@ const Intro = ({ onComplete }) => {
 
   return (
     <div className="intro-wrapper">
-      <div className="intro-container" onClick={handleNext}>
-        <div className="snowflakes">
-          {snowflakes.map((flake, i) => (
-            <div key={i} className="snowflake" style={{
-              left: flake.left,
-              animationDelay: flake.delay,
-              animationDuration: flake.duration,
-            }} />
-          ))}
-        </div>
+    <div className="intro-container" onClick={handleNext}>
+      <div className="snowflakes">
+        {snowflakes.map((flake, i) => (
+          <div key={i} className="snowflake" style={{
+            left: flake.left,
+            animationDelay: flake.delay,
+            animationDuration: flake.duration,
+          }} />
+        ))}
+      </div>
 
-        <div className="intro-card" onClick={handleNext}>
+      <div className="intro-card" onClick={handleNext}>
         <img src="/assets/santa_popup.png" alt="Santa" className="intro-santa" />
         <img src="/assets/dialog.png" alt="Dialog" className="dialog-bubble" />
         <div className="dialog-text-box">
