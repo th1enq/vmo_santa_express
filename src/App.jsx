@@ -126,14 +126,12 @@ function App() {
         // Clamp gap between 120 and 200 to ensure playability
         const finalGap = Math.max(120, Math.min(200, calculatedGap));
         setPipeGap(finalGap);
-        console.log(`Mobile - Screen Height: ${screenHeight}, Gap: ${finalGap} (${((finalGap/screenHeight)*100).toFixed(1)}%)`);
       } else {
         // Desktop: use fixed dimensions
         setGameWidth(FIXED_GAME_WIDTH);
         setGameHeight(FIXED_GAME_HEIGHT);
         // Desktop: gap as percentage of fixed height (26.7% of 750 = 200)
         setPipeGap(200);
-        console.log(`Desktop - Height: ${FIXED_GAME_HEIGHT}, Gap: 200 (26.7%)`);
       }
     };
     
@@ -307,23 +305,8 @@ function App() {
           
           // Safety check: ensure pipe height is not negative
           if (height < 0) {
-            console.error(`Invalid pipe height: ${height}. Skipping pipe generation.`);
             return prevPipes;
           }
-          
-          console.log(`Pipe spawn - gameHeight: ${currentGameHeight}, gap: ${currentGap}, treeSize: ${treeSize}, treeHeight: ${treeHeight}, pipeHeight: ${height}, treeTopY: ${treeTopY}`);
-          
-          // Validate calculations
-          const pipeBottom = height + currentGap;
-          const treeTop = currentGameHeight - groundHeight - treeHeight;
-          
-          // Ensure gap is exactly currentGap
-          if (Math.abs(pipeBottom - treeTop) > 1) {
-            console.warn(`Gap mismatch: pipeBottom=${pipeBottom}, treeTop=${treeTop}, gap=${pipeBottom - treeTop}`);
-          }
-          
-          // 50% chance to spawn a floating giftbox between pipes
-          const shouldSpawnGiftbox = Math.random() > 0.5;
           
           const newPipe = {
             id: Date.now(),
@@ -334,22 +317,6 @@ function App() {
             treeSize,
           };
           
-          // Spawn floating giftbox in the gap
-          if (shouldSpawnGiftbox) {
-            const giftboxY = height + currentGap / 2 - 30; // Center in gap
-            const randomOffset = Math.random() * 40 - 20; // Random offset ±20px
-            
-            setFloatingGiftboxes((prev) => [
-              ...prev,
-              {
-                id: Date.now() + Math.random(),
-                x: gameWidth + PIPE_WIDTH / 2 - 30, // Center horizontally
-                initialY: giftboxY + randomOffset,
-                animationOffset: Math.random() * Math.PI * 2, // Random start phase
-              },
-            ]);
-          }
-          
           return [...prevPipes, newPipe];
         });
       };
@@ -357,8 +324,8 @@ function App() {
       // Generate first pipe after a delay
       const firstPipeTimeout = setTimeout(generatePipe, 1500);
 
-      // Check for new pipes regularly
-      pipeTimerRef.current = setInterval(generatePipe, 220); // Check every 200ms
+      // Check for new pipes regularly but less frequently to reduce overhead
+      pipeTimerRef.current = setInterval(generatePipe, 300); // Check every 300ms (reduced from 220ms)
 
       return () => {
         clearTimeout(firstPipeTimeout);
@@ -368,6 +335,61 @@ function App() {
       };
     }
   }, [gameStarted, gameOver, gameWidth, gameHeight, pipeGap]);
+
+  // Generate floating giftboxes independently (not tied to pipes)
+  useEffect(() => {
+    if (gameStarted && !gameOver) {
+      const spawnGiftbox = () => {
+        setFloatingGiftboxes((prevGiftboxes) => {
+          // Check if last giftbox is far enough
+          if (prevGiftboxes.length > 0) {
+            const lastGiftbox = prevGiftboxes[prevGiftboxes.length - 1];
+            const minDistance = 300; // Minimum distance between giftboxes
+            if (lastGiftbox.x > gameWidth - minDistance) {
+              return prevGiftboxes; // Don't spawn yet
+            }
+          }
+          
+          // Simple random Y position without collision checking
+          const groundHeight = 80;
+          const safeZoneTop = 100; // Avoid top area
+          const safeZoneBottom = gameHeight - groundHeight - 150; // Avoid ground area
+          
+          // Random Y position
+          const randomY = safeZoneTop + Math.random() * (safeZoneBottom - safeZoneTop);
+          
+          return [
+            ...prevGiftboxes,
+            {
+              id: Date.now() + Math.random(),
+              x: gameWidth,
+              initialY: randomY,
+              animationOffset: Math.random() * Math.PI * 2,
+            },
+          ];
+        });
+      };
+      
+      // Spawn giftbox every 3-5 seconds randomly
+      const scheduleNextGiftbox = () => {
+        const delay = 3000 + Math.random() * 2000; // 3-5 seconds
+        const giftboxTimer = setTimeout(() => {
+          if (gameStarted && !gameOver) {
+            spawnGiftbox();
+            scheduleNextGiftbox();
+          }
+        }, delay);
+        
+        return giftboxTimer;
+      };
+      
+      const timer = scheduleNextGiftbox();
+      
+      return () => {
+        clearTimeout(timer);
+      };
+    }
+  }, [gameStarted, gameOver, gameWidth, gameHeight]);
 
   // Generate decorations (similar to pipes)
   useEffect(() => {
@@ -463,8 +485,6 @@ function App() {
           breakingTime: 0, // Track how long it's been breaking
         };
         
-        console.log('Dropping gift:', newGift);
-        
         setGifts((prev) => [...prev, newGift]);
       };
 
@@ -489,20 +509,19 @@ function App() {
   useEffect(() => {
     if (gameStarted && !gameOver) {
       // Use requestAnimationFrame for better performance
-      // Target FPS: 60 for desktop, 30 for mobile (optimized for performance)
-      const targetFPS = isMobile ? 30 : 60;
-      const frameInterval = 1000 / targetFPS;
-      let lastFrameTime = performance.now();
+      // Target 60 FPS for all devices (mobile can handle it with optimizations)
       let animationFrameId = null;
+      let lastTime = performance.now();
       
       const gameLoop = (currentTime) => {
-        const deltaTime = currentTime - lastFrameTime;
+        const deltaTime = currentTime - lastTime;
         
-        // Throttle to target FPS but use deltaTime for consistent speed
-        if (deltaTime >= frameInterval) {
-          // Calculate speed multiplier based on actual frame time to maintain consistent speed
-          const speedMultiplier = deltaTime / (1000 / 60); // Normalize to 60 FPS speed
-          lastFrameTime = currentTime - (deltaTime % frameInterval);
+        // Run at 60 FPS consistently
+        if (deltaTime >= 16.67) { // ~60 FPS
+          lastTime = currentTime;
+          
+          // Calculate speed multiplier for consistent physics
+          const speedMultiplier = deltaTime / 16.67;
           
           // Get current positions for collision detection
           const currentSantaY = santaYRef.current;
@@ -602,20 +621,19 @@ function App() {
             const pipeRight = pipe.x + PIPE_WIDTH;
 
             // Check if santa passed the pipe for scoring
-            if (!scoredPipesRef.current.has(pipe.id) && santaRight > pipeRight) {
+            // Use center of Santa instead of right edge for more reliable scoring
+            const santaCenter = santaLeftPos + currentSantaSize / 2;
+            if (!scoredPipesRef.current.has(pipe.id) && santaCenter > pipeRight) {
               scoredPipesRef.current.add(pipe.id);
               playSound('point');
               setScore((s) => s + 1);
+              console.log('Score!', s + 1, 'Pipe ID:', pipe.id);
             }
 
             // Check collision with top pipe
             if (santaRight > pipeLeft && santaLeft < pipeRight) {
               if (santaTop < pipe.topHeight) {
                 if (!isDead) {
-                  console.log('TOP PIPE COLLISION!', {
-                    santaTop,
-                    pipeTopHeight: pipe.topHeight,
-                  });
                   playSound('hit');
                   setTimeout(() => playSound('die'), 100);
                   setIsDead(true);
@@ -641,14 +659,6 @@ function App() {
               // Check if any part of Santa is inside the tree (using top-down Y coordinates)
               if (santaBottom > treeTopY && santaTop < treeBottomY) {
                 if (!isDead) {
-                  console.log('TREE COLLISION!', {
-                    santaTop,
-                    santaBottom,
-                    treeTopY,
-                    treeBottomY,
-                    treeSize: pipe.treeSize,
-                    gameHeight
-                  });
                   playSound('hit');
                   setTimeout(() => playSound('die'), 100);
                   setIsDead(true);
@@ -821,20 +831,23 @@ function App() {
   };
 
   // Filter objects in viewport for better performance (only render visible objects)
+  // Use larger margins to avoid recalculation overhead
   const visiblePipes = useMemo(() => {
-    const viewportMargin = 200;
+    const viewportMargin = 300; // Increased from 200
     return pipes.filter((pipe) => pipe.x > -viewportMargin && pipe.x < gameWidth + viewportMargin);
   }, [pipes, gameWidth]);
 
   const visibleGifts = useMemo(() => {
+    const viewportMargin = 150; // Increased from 100
     return gifts.filter((gift) => 
-      gift.x > -100 && gift.x < gameWidth + 100 && gift.y < gameHeight + 100
+      gift.x > -viewportMargin && gift.x < gameWidth + viewportMargin && gift.y < gameHeight + viewportMargin
     );
   }, [gifts, gameWidth, gameHeight]);
 
   const visibleFloatingGiftboxes = useMemo(() => {
+    const viewportMargin = 250; // Increased from 200
     return floatingGiftboxes.filter((giftbox) => 
-      giftbox.x > -200 && giftbox.x < gameWidth + 200
+      giftbox.x > -viewportMargin && giftbox.x < gameWidth + viewportMargin
     );
   }, [floatingGiftboxes, gameWidth]);
 

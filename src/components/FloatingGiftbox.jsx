@@ -11,7 +11,7 @@ const FloatingGiftbox = React.memo(({ x, y, showHitbox }) => {
       }}
     >
       <img
-        src="/assets/Giftbox.png"
+        src="/assets/Giftbox-1.png"
         alt="floating giftbox"
         style={{
           width: '60px',
