@@ -201,7 +201,7 @@ function App() {
       };
       const merged = [...leaderboard, entry]
         .sort((a, b) => b.score - a.score)
-        .slice(0, 20);
+        .slice(0, 10);
       setLeaderboard(merged);
       localStorage.setItem('santaFlappyLeaderboard', JSON.stringify(merged));
       hasRecordedScoreRef.current = true;
@@ -971,13 +971,14 @@ function App() {
       duration: `${8 + Math.random() * 6}s`,
       sway: `${4 + Math.random() * 4}s`,
       drift: `${-8 + Math.random() * 16}px`,
-      size: `${16 + Math.random() * 10}px`,
+      size: `8px`,
       opacity: 0.6 + Math.random() * 0.4,
     }))
   ), []);
 
   // Set CSS variables on document root for all components to use
   useEffect(() => {
+    document.documentElement.style.setProperty('--scale', scale);
     document.documentElement.style.setProperty('--game-scale', scale);
     document.documentElement.style.setProperty('--game-scale-x', scaleX);
     document.documentElement.style.setProperty('--game-scale-y', scaleY);
@@ -1069,14 +1070,18 @@ function App() {
                   '--snow-duration': flake.duration,
                   '--snow-sway': flake.sway,
                   '--snow-drift': flake.drift,
-                  fontSize: flake.size,
+                  width: flake.size,
+                  height: flake.size,
                   opacity: flake.opacity,
                 }}
-              >
-                ❄
-              </div>
+              />
             ))}
           </div>
+        )}
+
+        {/* Dark overlay when game over */}
+        {gameOver && !showLeaderboard && (
+          <div className="game-over-darken" />
         )}
 
         <Score 

@@ -170,23 +170,22 @@ const EnterID = ({ onSubmit, onCancel }) => {
   const fullId = vmoId.join('');
 
   return (
-    <div className="enter-id-overlay">
-      <div className="snowflakes">
-        {snowflakes.map((flake, i) => (
-          <div
-            key={i}
-            className="snowflake"
-            style={{
-              left: flake.left,
-              animationDelay: flake.delay,
-              animationDuration: flake.duration,
-            }}
-          >
-            ❄
-          </div>
-        ))}
-      </div>
-      <div className="enter-id-container">
+    <div className="enter-id-wrapper">
+      <div className="enter-id-overlay">
+        <div className="snowflakes">
+          {snowflakes.map((flake, i) => (
+            <div
+              key={i}
+              className="snowflake"
+              style={{
+                left: flake.left,
+                animationDelay: flake.delay,
+                animationDuration: flake.duration,
+              }}
+            />
+          ))}
+        </div>
+        <div className="enter-id-container">
         <div className="enter-id-content">
           <img 
             src="/assets/vmo_id.png" 
@@ -196,20 +195,32 @@ const EnterID = ({ onSubmit, onCancel }) => {
           
           <div className="input-boxes-container">
             {vmoId.map((digit, index) => (
-              <input
+              <div
                 key={index}
-                ref={(el) => (inputRefs.current[index] = el)}
-                type="tel"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength="1"
-                value={digit}
-                onChange={(e) => handleInputChange(index, e)}
-                onKeyDown={(e) => handleKeyDown(index, e)}
-                onPaste={handlePaste}
                 className={`input-box ${showWarning ? 'input-error' : ''}`}
-                autoComplete="off"
-              />
+                onClick={() => focusInput(index)}
+              >
+                {digit && (
+                  <img
+                    src={`/assets/${digit}.png`}
+                    alt={digit}
+                    className="digit-image-display"
+                  />
+                )}
+                <input
+                  ref={(el) => (inputRefs.current[index] = el)}
+                  type="tel"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength="1"
+                  value={digit}
+                  onChange={(e) => handleInputChange(index, e)}
+                  onKeyDown={(e) => handleKeyDown(index, e)}
+                  onPaste={handlePaste}
+                  className="hidden-input"
+                  autoComplete="off"
+                />
+              </div>
             ))}
           </div>
           
@@ -222,6 +233,7 @@ const EnterID = ({ onSubmit, onCancel }) => {
               Please enter 4 digits
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>

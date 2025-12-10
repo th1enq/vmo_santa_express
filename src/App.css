@@ -5,12 +5,21 @@
   margin: 0 auto;
   position: relative;
   overflow: hidden;
-  background-image: url('/assets/bg_3.png');
+  background-image: url('/assets/bg_loading.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   cursor: pointer;
   transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.game-over-darken {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 100; /* Below game over overlay (z-index 200) but above game elements */
+  pointer-events: none;
+  transition: background 0.3s ease;
 }
 
 .game-snowflakes {
@@ -24,8 +33,12 @@
 .game-snowflake {
   position: absolute;
   top: -10%;
-  color: white;
-  text-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+  width: 8px;
+  height: 8px;
+  background: #FFFACD;
+  border-radius: 50%;
+  box-shadow: 0 0 calc(6px * var(--scale, 1)) rgba(255, 250, 205, 0.7), 
+              0 0 calc(10px * var(--scale, 1)) rgba(255, 250, 205, 0.4);
   /* Separate fall on top property so sway transform is not overridden */
   animation: game-snow-fall var(--snow-duration, 10s) linear infinite,
              game-snow-sway var(--snow-sway, 6s) ease-in-out infinite alternate;

@@ -19,7 +19,21 @@ const NumberDisplay = ({ number }) => {
 };
 
 const Score = ({ score, highScore, gameStarted, gameOver, onRetry, onShowLeaderboard }) => {
+  const playPointSound = () => {
+    const audio = new window.Audio('/assets/audio/point.ogg');
+    audio.volume = 0.3;
+    audio.play().catch(() => {});
+  };
+
+  const handleRetryClick = () => {
+    playPointSound();
+    if (typeof onRetry === 'function') {
+      onRetry();
+    }
+  };
+
   const handleShowLeaderboard = () => {
+    playPointSound();
     if (typeof onShowLeaderboard === 'function') {
       onShowLeaderboard();
     }
@@ -52,15 +66,14 @@ const Score = ({ score, highScore, gameStarted, gameOver, onRetry, onShowLeaderb
               alt="Game Over"
               className="game-over-title"
             />
-
-            <div className="game-over-scores">
-              <div className="score-row">
-              <img src="/assets/score.png" alt="Score" className="score-label" />
-                <NumberDisplay number={score} />
+            <div className="game-over-scores ka1-font">
+              <div className="score-row-ka1">
+                <span className="score-label-ka1">SCORE</span>
+                <span className="score-value-ka1">{score}</span>
               </div>
-              <div className="score-row">
-              <img src="/assets/best.png" alt="Best" className="score-label" />
-                <NumberDisplay number={highScore} />
+              <div className="score-row-ka1">
+                <span className="score-label-ka1">BEST</span>
+                <span className="score-value-ka1">{highScore}</span>
               </div>
             </div>
 
@@ -68,7 +81,7 @@ const Score = ({ score, highScore, gameStarted, gameOver, onRetry, onShowLeaderb
               <button
                 className="game-over-btn"
                 type="button"
-                onClick={onRetry}
+                onClick={handleRetryClick}
                 aria-label="Retry"
               >
                 <img src="/assets/retry.png" alt="Retry" />

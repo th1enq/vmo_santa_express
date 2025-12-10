@@ -1,8 +1,14 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import './LeaderboardOverlay.css';
 
 const LeaderboardOverlay = ({ entries = [], onClose }) => {
-  const topEntries = entries.slice(0, 5);
+  const [currentPage, setCurrentPage] = useState(1);
+  const entriesPerPage = 5;
+  const totalPages = Math.ceil(entries.length / entriesPerPage);
+  
+  const startIndex = (currentPage - 1) * entriesPerPage;
+  const endIndex = startIndex + entriesPerPage;
+  const currentEntries = entries.slice(startIndex, endIndex);
 
   const CELL_SIZE = 8;
 
@@ -40,9 +46,38 @@ const LeaderboardOverlay = ({ entries = [], onClose }) => {
     );
   };
 
+  const handleSkip = (e) => {
+    e.stopPropagation();
+    onClose();
+  };
+
+  const handleNextPage = (e) => {
+    e.stopPropagation();
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePrevPage = (e) => {
+    e.stopPropagation();
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
   return (
     <div className="leaderboard-overlay" onClick={onClose} role="presentation">
       <div className="leaderboard-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+        {/* Skip button */}
+        <button
+          className="leaderboard-skip"
+          type="button"
+          onClick={handleSkip}
+          aria-label="Skip"
+        >
+          <img src="/assets/back.png" alt="Skip" />
+        </button>
+
         <img
           src="/assets/leaderboard_title.png"
           alt="Leaderboard"
@@ -50,38 +85,71 @@ const LeaderboardOverlay = ({ entries = [], onClose }) => {
         />
 
         <div className="leaderboard-list">
-          {topEntries.length === 0 && (
-            <div className="leaderboard-empty">
-              <BitmapText text="NO DATA" />
+          {/* Header row */}
+          <div className="leaderboard-header">
+            <span className="lb-rank ka1-font">
+              <span className="score-value-ka1">Rank</span>
+            </span>
+            <span className="lb-id ka1-font">
+              <span className="score-value-ka1">VMO_ID</span>
+            </span>
+            <span className="lb-score ka1-font">
+              <span className="score-value-ka1">Score</span>
+            </span>
+          </div>
+
+          {currentEntries.length === 0 && (
+            <div className="leaderboard-empty ka1-font">
+              <span className="score-value-ka1">NO DATA</span>
             </div>
           )}
 
-          {topEntries.map((item, index) => {
-            const idText = (item.vmoId || '----').toString().toUpperCase();
+          {currentEntries.map((item, index) => {
+            const idText = `${(item.vmoId || '----').toString().toUpperCase()}`;
             const scoreText = (item.score ?? 0).toString();
-            const cupSources = [
-              '/assets/gold_trophy_16x16_2.png',
-              '/assets/platinum_trophy_16x16_2.png',
-              '/assets/silver_trophy_16x16_2.png',
-              '/assets/bronze_trophy_16x16_2.png',
-              '/assets/silhoutte_trophy_16x16_2.png',
-            ];
-            const cupSrc = cupSources[index] || cupSources[cupSources.length - 1];
+            const rankNumber = startIndex + index + 1;
+            const rankText = `${rankNumber}.`;
             return (
               <div className="leaderboard-row" key={item.id ?? index}>
-                <span className="lb-rank" aria-label={`Rank ${index + 1}`}>
-                  <img src={cupSrc} alt={`Rank ${index + 1}`} />
+                <span className="lb-rank ka1-font" aria-label={`Rank ${rankNumber}`}>
+                  <span className="score-value-ka1">{rankText}</span>
                 </span>
-                <span className="lb-id">
-                  <BitmapText text={idText} />
+                <span className="lb-id ka1-font">
+                  <span className="score-value-ka1">{idText}</span>
                 </span>
-                <span className="lb-score">
-                  <BitmapText text={scoreText} />
+                <span className="lb-score ka1-font">
+                  <span className="score-value-ka1">{scoreText}</span>
                 </span>
               </div>
             );
           })}
         </div>
+
+        {/* Pagination arrows */}
+        {totalPages > 1 && (
+          <>
+            {currentPage > 1 && (
+              <button
+                className="leaderboard-arrow leaderboard-arrow-left"
+                type="button"
+                onClick={handlePrevPage}
+                aria-label="Previous page"
+              >
+                <span>‹</span>
+              </button>
+            )}
+            {currentPage < totalPages && (
+              <button
+                className="leaderboard-arrow leaderboard-arrow-right"
+                type="button"
+                onClick={handleNextPage}
+                aria-label="Next page"
+              >
+                <span>›</span>
+              </button>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

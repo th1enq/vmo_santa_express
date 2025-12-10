@@ -28,16 +28,24 @@ const LoadingScreen = ({ onComplete }) => {
     return () => clearInterval(interval);
   }, []);
 
+  const playPointSound = () => {
+    const audio = new window.Audio('/assets/audio/point.ogg');
+    audio.volume = 0.3;
+    audio.play().catch(() => {});
+  };
+
   useEffect(() => {
     if (!loaded) return;
 
     const handleKeyPress = (e) => {
       if (e.key === 'Enter') {
+        playPointSound();
         onComplete();
       }
     };
 
     const handleClick = () => {
+      playPointSound();
       onComplete();
     };
 
@@ -50,23 +58,22 @@ const LoadingScreen = ({ onComplete }) => {
   }, [loaded, onComplete]);
 
   return (
-    <div className="loading-screen" style={{ cursor: loaded ? 'pointer' : 'default' }}>
-      <div className="snowflakes">
-        {snowflakes.map((flake, i) => (
-          <div
-            key={i}
-            className="snowflake"
-            style={{
-              left: flake.left,
-              animationDelay: flake.delay,
-              animationDuration: flake.duration,
-            }}
-          >
-            ❄
-          </div>
-        ))}
-      </div>
-      <div className="loading-content">
+    <div className="loading-screen-wrapper">
+      <div className="loading-screen" style={{ cursor: loaded ? 'pointer' : 'default' }}>
+        <div className="snowflakes">
+          {snowflakes.map((flake, i) => (
+            <div
+              key={i}
+              className="snowflake"
+              style={{
+                left: flake.left,
+                animationDelay: flake.delay,
+                animationDuration: flake.duration,
+              }}
+            />
+          ))}
+        </div>
+        <div className="loading-content">
         <img 
           src="/assets/santa_express.png" 
           alt="Santa Express Game Title" 
@@ -97,6 +104,7 @@ const LoadingScreen = ({ onComplete }) => {
             Press ENTER or CLICK to start
           </div>
         )}
+        </div>
       </div>
     </div>
   );
