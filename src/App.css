@@ -9,6 +9,7 @@
   align-items: center;
   justify-content: center;
   z-index: 1;
+  cursor: url('/assets/chrismast_cursor.cur') 8 3, auto;
 }
 
 .game-wrapper::before {
@@ -31,7 +32,7 @@
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  cursor: pointer;
+  cursor: url('/assets/chrismast_cursor.cur') 8 3, auto;
   transition: opacity 0.3s ease, visibility 0.3s ease;
   z-index: 2;
   box-shadow: 0 0 calc(30px * var(--scale, 1)) rgba(0, 0, 0, 0.5);
@@ -151,4 +152,77 @@
   z-index: 30000;
   pointer-events: none;
   object-fit: contain;
+}
+
+.music-toggle-btn {
+  position: absolute;
+  top: calc(12px * var(--scale, 1));
+  left: calc(12px * var(--scale, 1));
+  width: calc(50px * var(--scale, 1));
+  height: calc(50px * var(--scale, 1));
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: url('/assets/chrismast_pointer.cur') 8 3, pointer;
+  z-index: 30000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.music-toggle-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.music-toggle-btn:hover {
+  transform: scale(1.1);
+}
+
+.music-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+.leaderboard-btn {
+  position: absolute;
+  top: calc(12px * var(--scale, 1));
+  left: calc(75px * var(--scale, 1));
+  width: calc(50px * var(--scale, 1));
+  height: calc(50px * var(--scale, 1));
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: url('/assets/chrismast_pointer.cur') 8 3, pointer;
+  z-index: 30000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.leaderboard-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.leaderboard-btn:hover {
+  transform: scale(1.1);
+}
+
+.leaderboard-btn:active {
+  transform: scale(0.95);
+}
+
+/* Pointer cursor for interactive elements */
+button,
+a,
+.resume-button,
+.input-box,
+.score-overlay button {
+  cursor: url('/assets/chrismast_pointer.cur') 8 3, pointer;
 }

@@ -9,6 +9,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: url('/assets/chrismast_cursor.cur') 15 5, auto;
 }
 
 .intro-wrapper::before {
@@ -30,7 +31,7 @@
   align-items: center;
   justify-content: center;
   z-index: 2;
-  cursor: pointer;
+  cursor: url('/assets/chrismast_cursor.cur') 15 5, auto;
   background-image: url('/assets/bg_loading.png');
   background-size: cover;
   background-position: center;
@@ -50,25 +51,31 @@
 .snowflake {
   position: absolute;
   top: -10%;
-  width: calc(8px * var(--game-scale, 1));
-  height: calc(8px * var(--game-scale, 1));
+  width: 8px;
+  height: 8px;
   background: #FFFACD;
   border-radius: 50%;
-  box-shadow: 0 0 calc(6px * var(--game-scale, 1)) rgba(255, 250, 205, 0.7), 
-              0 0 calc(10px * var(--game-scale, 1)) rgba(255, 250, 205, 0.4);
-  animation: fall linear infinite;
-  opacity: 0.8;
+  box-shadow: 0 0 calc(6px * var(--scale, 1)) rgba(255, 250, 205, 0.7), 
+              0 0 calc(10px * var(--scale, 1)) rgba(255, 250, 205, 0.4);
+  /* Separate fall on top property so sway transform is not overridden */
+  animation: intro-snow-fall var(--snow-duration, 10s) linear infinite,
+             intro-snow-sway var(--snow-sway, 6s) ease-in-out infinite alternate;
 }
 
-@keyframes fall {
+@keyframes intro-snow-fall {
   to {
-    transform: translateY(110%);
+    top: 110%;
   }
+}
+
+@keyframes intro-snow-sway {
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(var(--snow-drift, 10px), 0, 0); }
 }
 
 .intro-card {
   position: relative;
-  width: min(95vw, calc(900px * var(--game-scale, 1)));
+  width: min(95vw, calc(400px * var(--game-scale, 1)));
   aspect-ratio: 1095 / 1280;
   background-image: url('/assets/window1.png');
   background-size: contain;
@@ -90,9 +97,9 @@
 
 .dialog-bubble {
   position: absolute;
-  top: 15%;
-  right: 15%;
-  width: min(60%, calc(620px * var(--game-scale, 1)));
+  top: 10%;
+  right: 10%;
+  width: min(75%, calc(650px * var(--game-scale, 1)));
   height: auto;
   object-fit: contain;
   pointer-events: none;
@@ -100,9 +107,9 @@
 
 .dialog-text-box {
   position: absolute;
-  top: 5%;
-  right: 20%;
-  left: 30%;
+  top: 2%;
+  right: 13%;
+  left: 20%;
   bottom: 34%;
   display: flex;
   align-items: center;
@@ -118,9 +125,9 @@
 
 .intro-santa {
   position: absolute;
-  left: 12%;
-  bottom: 0%;
-  width: min(calc(320px * var(--game-scale, 1)), 44vw);
+  left: -2%;
+  bottom: -4%;
+  width: min(calc(270px * var(--game-scale, 1)), 44vw);
   height: auto;
   object-fit: contain;
   pointer-events: none;
@@ -144,8 +151,8 @@
   background: none;
   border: none;
   padding: 0;
-  cursor: pointer;
-  width: calc(100px * var(--game-scale, 1));
+  cursor: url('/assets/chrismast_pointer.cur') 8 3, pointer;
+  width: calc(80px * var(--game-scale, 1));
   max-width: 32vw;
   height: auto;
   transition: transform 0.2s ease;

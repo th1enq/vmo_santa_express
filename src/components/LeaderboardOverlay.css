@@ -19,6 +19,7 @@
   background: rgba(0, 0, 0, 0.45);
   z-index: 40000;
   pointer-events: auto;
+  cursor: url('/assets/chrismast_cursor.cur') 15 5, auto;
 }
 
 .leaderboard-card {
@@ -188,14 +189,14 @@
 
 .leaderboard-skip {
   position: absolute;
-  top: calc(-50px * var(--scale, 1));
-  left: calc(1px * var(--scale, 1));
+  top: calc(20px * var(--scale, 1));
+  left: calc(350px * var(--scale, 1));
   background: none;
   border: none;
   padding: 0;
-  cursor: pointer;
+  cursor: url('/assets/chrismast_pointer.cur') 8 3, pointer;
   z-index: 10;
-  width: calc(150px * var(--scale, 1));
+  width: calc(120px * var(--scale, 1));
   height: calc(56px * var(--scale, 1));
   display: flex;
   align-items: center;
@@ -221,54 +222,54 @@
   position: absolute;
   width: calc(50px * var(--scale, 1));
   height: calc(50px * var(--scale, 1));
-  background: rgba(92, 26, 26, 0.15);
-  border: calc(2px * var(--scale, 1)) solid rgba(92, 26, 26, 0.5);
-  border-radius: 50%;
-  cursor: pointer;
+  background: none;
+  border: none;
+  border-radius: 0;
+  cursor: url('/assets/chrismast_pointer.cur') 8 3, pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10;
   pointer-events: auto;
-  color: #5c1a1a;
-  font-size: calc(36px * var(--scale, 1));
-  font-weight: bold;
-  text-shadow: 0 calc(2px * var(--scale, 1)) calc(4px * var(--scale, 1)) rgba(0, 0, 0, 0.5);
-  box-shadow: 0 calc(4px * var(--scale, 1)) calc(8px * var(--scale, 1)) rgba(92, 26, 26, 0.3);
-  animation: arrow-pulse 2s ease-in-out infinite;
   transition: all 0.2s ease;
+  padding: 0;
+  animation: arrow-pulse 1.5s ease-in-out infinite;
+}
+
+.leaderboard-arrow img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 .leaderboard-arrow:hover {
-  background: rgba(92, 26, 26, 0.25);
-  border-color: rgba(92, 26, 26, 0.7);
   transform: scale(1.1);
-  box-shadow: 0 calc(6px * var(--scale, 1)) calc(12px * var(--scale, 1)) rgba(92, 26, 26, 0.4);
+  animation: none;
 }
 
 .leaderboard-arrow:active {
   transform: scale(0.95);
+  animation: none;
 }
 
 @keyframes arrow-pulse {
   0%, 100% {
-    opacity: 1;
     transform: scale(1);
   }
   50% {
-    opacity: 0.8;
-    transform: scale(1.05);
+    transform: scale(1.2);
   }
 }
 
-.leaderboard-arrow-left {
-  bottom: calc(40px * var(--scale, 1));
-  left: calc(360px * var(--scale, 1));
+.leaderboard-arrow-right {
+  bottom: calc(-5px * var(--scale, 1));
+  left: calc(400px * var(--scale, 1));
 }
 
-.leaderboard-arrow-right {
-  bottom: calc(40px * var(--scale, 1));
-  left: calc(360px * var(--scale, 1));
+.leaderboard-arrow-left {
+  bottom: calc(-5px * var(--scale, 1));
+  right: calc(400px * var(--scale, 1));
 }
 
 .bitmap-text {
@@ -289,8 +290,13 @@
 }
 
 @media (max-width: 600px) {
+  .leaderboard-skip {
+    top: calc(30px * var(--scale, 1));
+    left: calc(300px * var(--scale, 1));
+  }
+
   .leaderboard-card {
-    width: min(85vw, calc(380px * var(--scale, 1)));
+    width: min(85vw, calc(400px * var(--scale, 1)));
     padding: calc(20px * var(--scale, 1));
     margin-top: calc(-20px * var(--scale, 1));
   }
@@ -313,6 +319,16 @@
 
   .leaderboard-list {
     margin-top: calc(-40px * var(--scale, 1));
+    margin-bottom: calc(50px * var(--scale, 1));
     gap: calc(10px * var(--scale, 1));
+  }
+
+  .leaderboard-arrow-right {
+    bottom: calc(5px * var(--scale, 1));
+    left: calc(350px * var(--scale, 1));
+  }
+  .leaderboard-arrow-left {
+    bottom: calc(5px * var(--scale, 1));
+    right: calc(350px * var(--scale, 1));
   }
 }

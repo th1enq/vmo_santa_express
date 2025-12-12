@@ -21,7 +21,7 @@
     margin-top: calc((100vh - calc(var(--game-height, 750px) * 0.933)) / 2);
     left: 50%;
     transform: translateX(-50%);
-    box-shadow: 0 0 calc(30px * var(--game-scale, 1)) rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 calc(30px * var(--scale, 1)) rgba(0, 0, 0, 0.5);
   }
 }
 
@@ -41,8 +41,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 30px;
-  padding: 40px;
+  gap: calc(30px * var(--scale, 1));
+  padding: calc(40px * var(--scale, 1));
 }
 
 .menu-button {
@@ -88,8 +88,8 @@
 }
 
 .menu-button img {
-  width: calc(280px * var(--game-scale, 1));
-  max-width: min(70vw, calc(280px * var(--game-scale, 1)));
+  width: calc(280px * var(--scale, 1));
+  max-width: min(70vw, calc(280px * var(--scale, 1)));
   height: auto;
   display: block;
   image-rendering: auto;
@@ -98,23 +98,23 @@
 /* Responsive design - now handled by CSS variables */
 @media (max-width: 768px) {
   .menu-content {
-    gap: calc(20px * var(--game-scale, 1));
-    padding: calc(20px * var(--game-scale, 1));
+    gap: calc(20px * var(--scale, 1));
+    padding: calc(20px * var(--scale, 1));
   }
   
   .menu-button img {
-    width: calc(220px * var(--game-scale, 1));
-    max-width: min(60vw, calc(220px * var(--game-scale, 1)));
+    width: calc(220px * var(--scale, 1));
+    max-width: min(60vw, calc(220px * var(--scale, 1)));
   }
 }
 
 @media (max-width: 480px) {
   .menu-button img {
-    width: calc(180px * var(--game-scale, 1));
-    max-width: min(50vw, calc(180px * var(--game-scale, 1)));
+    width: calc(180px * var(--scale, 1));
+    max-width: min(50vw, calc(180px * var(--scale, 1)));
   }
   
   .menu-content {
-    gap: calc(15px * var(--game-scale, 1));
+    gap: calc(15px * var(--scale, 1));
   }
 }

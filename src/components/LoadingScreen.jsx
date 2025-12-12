@@ -9,6 +9,10 @@ const LoadingScreen = ({ onComplete }) => {
       left: `${Math.random() * 100}%`,
       delay: `${Math.random() * 5}s`,
       duration: `${8 + Math.random() * 6}s`,
+      sway: `${4 + Math.random() * 4}s`,
+      drift: `${-8 + Math.random() * 16}px`,
+      size: `8px`,
+      opacity: 0.6 + Math.random() * 0.4,
     }))
   ), []);
 
@@ -33,6 +37,43 @@ const LoadingScreen = ({ onComplete }) => {
     audio.volume = 0.3;
     audio.play().catch(() => {});
   };
+
+  // Try to play background music immediately and on any interaction
+  useEffect(() => {
+    const playBgMusic = () => {
+      // Get bgMusic from window if available
+      if (window.bgMusicRef) {
+        const promise = window.bgMusicRef.play();
+        if (promise !== undefined) {
+          promise
+            .then(() => {
+              console.log('Background music started playing');
+            })
+            .catch(err => {
+              console.log('Music play blocked, waiting for user interaction:', err);
+            });
+        }
+      }
+    };
+
+    // Try to play immediately when LoadingScreen mounts
+    playBgMusic();
+
+    // Also try on any click/touch/keypress during loading
+    const handleAnyInteraction = () => {
+      playBgMusic();
+    };
+
+    window.addEventListener('click', handleAnyInteraction);
+    window.addEventListener('touchstart', handleAnyInteraction);
+    window.addEventListener('keydown', handleAnyInteraction);
+
+    return () => {
+      window.removeEventListener('click', handleAnyInteraction);
+      window.removeEventListener('touchstart', handleAnyInteraction);
+      window.removeEventListener('keydown', handleAnyInteraction);
+    };
+  }, []);
 
   useEffect(() => {
     if (!loaded) return;
@@ -68,7 +109,12 @@ const LoadingScreen = ({ onComplete }) => {
             style={{
               left: flake.left,
               animationDelay: flake.delay,
-              animationDuration: flake.duration,
+              '--snow-duration': flake.duration,
+              '--snow-sway': flake.sway,
+              '--snow-drift': flake.drift,
+              width: flake.size,
+              height: flake.size,
+              opacity: flake.opacity,
             }}
           />
         ))}

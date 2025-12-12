@@ -76,7 +76,7 @@ const LeaderboardOverlay = ({ entries = [], onClose }) => {
           onClick={handleSkip}
           aria-label="Skip"
         >
-          <img src="/assets/back.png" alt="Skip" />
+          <img src="/assets/close.png" alt="Skip" />
         </button>
 
         <img
@@ -137,7 +137,7 @@ const LeaderboardOverlay = ({ entries = [], onClose }) => {
                 onClick={handlePrevPage}
                 aria-label="Previous page"
               >
-                <span>‹</span>
+                <img src="/assets/Backward.png" alt="Previous" />
               </button>
             )}
             {currentPage < totalPages && (
@@ -147,7 +147,7 @@ const LeaderboardOverlay = ({ entries = [], onClose }) => {
                 onClick={handleNextPage}
                 aria-label="Next page"
               >
-                <span>›</span>
+                <img src="/assets/Forward.png" alt="Next" />
               </button>
             )}
           </>

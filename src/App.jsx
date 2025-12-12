@@ -32,9 +32,14 @@ const soundFiles = {
 };
 
 // Background music
-const bgMusic = new Audio('/assets/audio/bg.wav');
-bgMusic.volume = 0.2;
+const bgMusic = new Audio('/assets/audio/funny_bg.mp3');
+bgMusic.volume = 0.4;
 bgMusic.loop = true;
+
+// Expose bgMusic globally so LoadingScreen can access it immediately
+if (typeof window !== 'undefined') {
+  window.bgMusicRef = bgMusic;
+}
 
 const GRAVITY = 0.5;
 const JUMP_STRENGTH = -8;
@@ -86,6 +91,7 @@ function App() {
   const [pipeGap, setPipeGap] = useState(BASE_PIPE_GAP);
   const [enableSmoke, setEnableSmoke] = useState(!isMobile); // Disable smoke on mobile for performance
   const [leaderboard, setLeaderboard] = useState([]);
+  const [isMusicOn, setIsMusicOn] = useState(true);
   const hasRecordedScoreRef = useRef(false);
   const gameStartTimeRef = useRef(null);
   const pipesPassedRef = useRef(0);
@@ -103,6 +109,7 @@ function App() {
   const gameContainerRef = useRef(null);
   const santaYRef = useRef(REFERENCE_HEIGHT * 0.4);
   const bgMusicRef = useRef(bgMusic);
+  const musicStartedRef = useRef(false);
 
   // Play sound helper function - creates new audio instance each time
   const playSound = useCallback((soundName) => {
@@ -110,6 +117,52 @@ function App() {
       const sound = createSound(soundFiles[soundName]);
       sound.play().catch(err => console.log('Audio play failed:', err));
     }
+  }, []);
+
+  // Handle music toggle
+  const handleMusicToggle = useCallback((e) => {
+    e.stopPropagation();
+    setIsMusicOn((prev) => {
+      const newState = !prev;
+      if (window.bgMusicRef) {
+        if (newState) {
+          window.bgMusicRef.play().catch(err => console.log('Audio play failed:', err));
+        } else {
+          window.bgMusicRef.pause();
+        }
+      }
+      return newState;
+    });
+  }, []);
+
+  // Ensure background music starts on first user interaction
+  useEffect(() => {
+    const tryPlayMusic = () => {
+      if (!musicStartedRef.current && window.bgMusicRef) {
+        const promise = window.bgMusicRef.play();
+        if (promise !== undefined) {
+          promise
+            .then(() => {
+              musicStartedRef.current = true;
+              console.log('Background music started');
+            })
+            .catch(() => {
+              // Music will play on next interaction
+            });
+        }
+      }
+    };
+
+    // Try on click, touch, and keydown
+    window.addEventListener('click', tryPlayMusic);
+    window.addEventListener('touchstart', tryPlayMusic);
+    window.addEventListener('keydown', tryPlayMusic);
+
+    return () => {
+      window.removeEventListener('click', tryPlayMusic);
+      window.removeEventListener('touchstart', tryPlayMusic);
+      window.removeEventListener('keydown', tryPlayMusic);
+    };
   }, []);
 
   // Update santaYRef whenever santaY changes
@@ -142,6 +195,34 @@ function App() {
     if (savedHighScore) {
       setHighScore(parseInt(savedHighScore, 10));
     }
+  }, []);
+
+  // Start background music on component mount (loading screen)
+  useEffect(() => {
+    const playMusic = () => {
+      bgMusicRef.current.play().catch(err => console.log('Background music autoplay failed:', err));
+    };
+    
+    // Try to play immediately
+    playMusic();
+    
+    // Also try on first user interaction (for browsers that block autoplay)
+    const handleInteraction = () => {
+      playMusic();
+      document.removeEventListener('click', handleInteraction);
+      document.removeEventListener('touchstart', handleInteraction);
+      document.removeEventListener('keydown', handleInteraction);
+    };
+    
+    document.addEventListener('click', handleInteraction);
+    document.addEventListener('touchstart', handleInteraction);
+    document.addEventListener('keydown', handleInteraction);
+    
+    return () => {
+      document.removeEventListener('click', handleInteraction);
+      document.removeEventListener('touchstart', handleInteraction);
+      document.removeEventListener('keydown', handleInteraction);
+    };
   }, []);
 
   // Update game dimensions responsively
@@ -323,7 +404,7 @@ function App() {
   useEffect(() => {
     const isInteractiveTarget = (target) => {
       if (!target) return false;
-      const closest = target.closest?.('.game-over-actions, .enter-id-container');
+      const closest = target.closest?.('.game-over-actions, .enter-id-container, .music-toggle-btn, .leaderboard-btn');
       return Boolean(closest);
     };
 
@@ -973,8 +1054,7 @@ function App() {
 
   const handlePlay = () => {
     setShowMainMenu(false);
-    // Start background music
-    bgMusicRef.current.play().catch(err => console.log('Background music play failed:', err));
+    // Music already playing from loading screen
     // Start game directly, don't show intro again
   };
 
@@ -1039,17 +1119,18 @@ function App() {
     document.documentElement.style.setProperty('--reference-height', `${REFERENCE_HEIGHT}px`);
   }, [scale, scaleX, scaleY, gameWidth, gameHeight]);
 
-  // Start background music when game starts
-  useEffect(() => {
-    if (gameStarted && !gameOver) {
-      bgMusicRef.current.play().catch(err => console.log('Background music play failed:', err));
-    } else if (gameOver) {
-      bgMusicRef.current.pause();
-    }
-  }, [gameStarted, gameOver]);
+  // Keep background music playing continuously (no pause on game over)
 
   return (
-    <>
+    <div 
+      style={{
+        '--scale': scale,
+        '--scale-x': scaleX,
+        '--scale-y': scaleY,
+        '--game-width': `${gameWidth}px`,
+        '--game-height': `${gameHeight}px`,
+      }}
+    >
       {/* Global branch logo for non-game screens */}
       {(showLoading || showIntro || showEnterID || showMainMenu) && (
       <img
@@ -1117,6 +1198,39 @@ function App() {
           alt="Branch logo"
           className="branch-logo-game"
         />
+
+        {/* Music toggle button - only show when not actively playing game */}
+        {(showLoading || showIntro || showEnterID || showMainMenu || !gameStarted) && (
+          <>
+            <button
+              className="music-toggle-btn"
+              onClick={handleMusicToggle}
+              aria-label={isMusicOn ? 'Turn off music' : 'Turn on music'}
+              title={isMusicOn ? 'Turn off music' : 'Turn on music'}
+            >
+              <img 
+                src={isMusicOn ? '/assets/music_on.png' : '/assets/music_off.png'} 
+                alt={isMusicOn ? 'Music on' : 'Music off'} 
+              />
+            </button>
+
+            {/* Leaderboard button */}
+            <button
+              className="leaderboard-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowLeaderboard(true);
+              }}
+              aria-label="Show leaderboard"
+              title="Show leaderboard"
+            >
+              <img 
+                src="/assets/glass.png" 
+                alt="Leaderboard" 
+              />
+            </button>
+          </>
+        )}
 
         {/* Snow overlay only during gameplay window */}
         {!(showLoading || showIntro || showEnterID || showMainMenu) && (
@@ -1218,7 +1332,7 @@ function App() {
       <Ground gameWidth={gameWidth} gameStarted={gameStarted} gameOver={gameOver} />
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

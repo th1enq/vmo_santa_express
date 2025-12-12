@@ -1,5 +1,5 @@
-import { ref, set, get, onValue, off } from 'firebase/database';
-import { database } from '../firebase';
+import { collection, doc, setDoc, getDoc, getDocs, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
+import { db } from '../firebase';
 import { 
   validateVmoId, 
   validateScore, 
@@ -8,7 +8,7 @@ import {
   createDataHash
 } from '../utils/security';
 
-const LEADERBOARD_PATH = 'leaderboard';
+const LEADERBOARD_COLLECTION = 'leaderboard';
 
 /**
  * Lưu điểm cao nhất của người chơi với validation và security checks
@@ -45,11 +45,11 @@ export const savePlayerScore = async (vmoId, score, gameState = {}) => {
   }
 
   try {
-    const playerRef = ref(database, `${LEADERBOARD_PATH}/${sanitizedVmoId}`);
+    const playerDocRef = doc(db, LEADERBOARD_COLLECTION, sanitizedVmoId);
     
     // Lấy điểm hiện tại của người chơi
-    const snapshot = await get(playerRef);
-    const currentData = snapshot.val();
+    const docSnap = await getDoc(playerDocRef);
+    const currentData = docSnap.exists() ? docSnap.data() : null;
     const previousScore = currentData?.score || 0;
     
     // Validate score với previous score
@@ -62,7 +62,7 @@ export const savePlayerScore = async (vmoId, score, gameState = {}) => {
       const timestamp = Date.now();
       const dataHash = createDataHash(sanitizedVmoId, score, timestamp);
       
-      await set(playerRef, {
+      await setDoc(playerDocRef, {
         vmoId: sanitizedVmoId,
         score: score,
         updatedAt: timestamp,
@@ -92,14 +92,14 @@ export const getPlayerHighScore = async (vmoId) => {
       return 0;
     }
 
-    const playerRef = ref(database, `${LEADERBOARD_PATH}/${sanitizedVmoId}`);
-    const snapshot = await get(playerRef);
+    const playerDocRef = doc(db, LEADERBOARD_COLLECTION, sanitizedVmoId);
+    const docSnap = await getDoc(playerDocRef);
     
-    if (!snapshot.exists()) {
+    if (!docSnap.exists()) {
       return 0;
     }
     
-    const data = snapshot.val();
+    const data = docSnap.data();
     return data?.score || 0;
   } catch (error) {
     return 0;
@@ -112,39 +112,36 @@ export const getPlayerHighScore = async (vmoId) => {
  */
 export const getTop10Leaderboard = async () => {
   try {
-    const leaderboardRef = ref(database, LEADERBOARD_PATH);
-    const snapshot = await get(leaderboardRef);
+    const leaderboardRef = collection(db, LEADERBOARD_COLLECTION);
+    const q = query(leaderboardRef, orderBy('score', 'desc'), limit(10));
+    const querySnapshot = await getDocs(q);
     
-    if (!snapshot.exists()) {
+    if (querySnapshot.empty) {
       return [];
     }
     
-    // Chuyển đổi snapshot thành mảng và sắp xếp theo điểm giảm dần
-    const data = snapshot.val();
-    const entries = Object.keys(data)
-      .map(key => {
-        const entry = data[key];
-        // Validate và sanitize dữ liệu
-        const score = typeof entry.score === 'number' && entry.score >= 0 && entry.score <= 10000 
-          ? Math.floor(entry.score) 
-          : 0;
-        const vmoId = typeof entry.vmoId === 'string' && entry.vmoId.length <= 10
-          ? entry.vmoId.slice(0, 10)
-          : key.slice(0, 10);
-        
-        return {
-          id: key,
+    // Chuyển đổi snapshot thành mảng
+    const entries = [];
+    querySnapshot.forEach((doc) => {
+      const entry = doc.data();
+      // Validate và sanitize dữ liệu
+      const score = typeof entry.score === 'number' && entry.score >= 0 && entry.score <= 10000 
+        ? Math.floor(entry.score) 
+        : 0;
+      const vmoId = typeof entry.vmoId === 'string' && entry.vmoId.length <= 10
+        ? entry.vmoId.slice(0, 10)
+        : doc.id.slice(0, 10);
+      
+      if (score > 0) { // Chỉ lấy entries có điểm hợp lệ
+        entries.push({
+          id: doc.id,
           vmoId: vmoId,
           score: score
-        };
-      })
-      .filter(entry => entry.score > 0); // Chỉ lấy entries có điểm hợp lệ
+        });
+      }
+    });
     
-    // Sắp xếp theo điểm giảm dần
-    entries.sort((a, b) => b.score - a.score);
-    
-    // Chỉ lấy top 10
-    return entries.slice(0, 10);
+    return entries;
   } catch (error) {
     return [];
   }
@@ -157,46 +154,41 @@ export const getTop10Leaderboard = async () => {
  */
 export const subscribeToLeaderboard = (callback) => {
   try {
-    const leaderboardRef = ref(database, LEADERBOARD_PATH);
+    const leaderboardRef = collection(db, LEADERBOARD_COLLECTION);
+    const q = query(leaderboardRef, orderBy('score', 'desc'), limit(10));
     
-    const unsubscribe = onValue(leaderboardRef, (snapshot) => {
-      if (!snapshot.exists()) {
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      if (querySnapshot.empty) {
         callback([]);
         return;
       }
       
-      const data = snapshot.val();
-      const entries = Object.keys(data)
-        .map(key => {
-          const entry = data[key];
-          // Validate và sanitize dữ liệu
-          const score = typeof entry.score === 'number' && entry.score >= 0 && entry.score <= 10000 
-            ? Math.floor(entry.score) 
-            : 0;
-          const vmoId = typeof entry.vmoId === 'string' && entry.vmoId.length <= 10
-            ? entry.vmoId.slice(0, 10)
-            : key.slice(0, 10);
-          
-          return {
-            id: key,
+      const entries = [];
+      querySnapshot.forEach((doc) => {
+        const entry = doc.data();
+        // Validate và sanitize dữ liệu
+        const score = typeof entry.score === 'number' && entry.score >= 0 && entry.score <= 10000 
+          ? Math.floor(entry.score) 
+          : 0;
+        const vmoId = typeof entry.vmoId === 'string' && entry.vmoId.length <= 10
+          ? entry.vmoId.slice(0, 10)
+          : doc.id.slice(0, 10);
+        
+        if (score > 0) { // Chỉ lấy entries có điểm hợp lệ
+          entries.push({
+            id: doc.id,
             vmoId: vmoId,
             score: score
-          };
-        })
-        .filter(entry => entry.score > 0); // Chỉ lấy entries có điểm hợp lệ
+          });
+        }
+      });
       
-      // Sắp xếp theo điểm giảm dần
-      entries.sort((a, b) => b.score - a.score);
-      
-      // Chỉ lấy top 10
-      callback(entries.slice(0, 10));
+      callback(entries);
     }, (error) => {
       callback([]);
     });
     
-    return () => {
-      off(leaderboardRef, 'value', unsubscribe);
-    };
+    return unsubscribe;
   } catch (error) {
     return () => {};
   }

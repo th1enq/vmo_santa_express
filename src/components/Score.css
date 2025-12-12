@@ -241,7 +241,7 @@
   background: none;
   border: none;
   padding: 0;
-  cursor: pointer;
+  cursor: url('/assets/chrismast_pointer.cur') 8 3, pointer;
   position: relative;
   pointer-events: auto;
   touch-action: manipulation;

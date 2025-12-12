@@ -23,6 +23,10 @@ const Intro = ({ onComplete }) => {
       left: `${Math.random() * 100}%`,
       delay: `${Math.random() * 5}s`,
       duration: `${8 + Math.random() * 6}s`,
+      sway: `${4 + Math.random() * 4}s`,
+      drift: `${-8 + Math.random() * 16}px`,
+      size: `8px`,
+      opacity: 0.6 + Math.random() * 0.4,
     }))
   ), []);
 
@@ -80,7 +84,12 @@ const Intro = ({ onComplete }) => {
           <div key={i} className="snowflake" style={{
             left: flake.left,
             animationDelay: flake.delay,
-            animationDuration: flake.duration,
+            '--snow-duration': flake.duration,
+            '--snow-sway': flake.sway,
+            '--snow-drift': flake.drift,
+            width: flake.size,
+            height: flake.size,
+            opacity: flake.opacity,
           }} />
         ))}
       </div>

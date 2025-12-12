@@ -11,6 +11,10 @@ const EnterID = ({ onSubmit, onCancel }) => {
       left: `${Math.random() * 100}%`,
       delay: `${Math.random() * 5}s`,
       duration: `${8 + Math.random() * 6}s`,
+      sway: `${4 + Math.random() * 4}s`,
+      drift: `${-8 + Math.random() * 16}px`,
+      size: `8px`,
+      opacity: 0.6 + Math.random() * 0.4,
     }))
   ), []);
 
@@ -28,6 +32,22 @@ const EnterID = ({ onSubmit, onCancel }) => {
   // Focus first input on mount
   useEffect(() => {
     focusInput(0);
+    // Try to play background music when EnterID mounts
+    const playBgMusic = () => {
+      if (window.bgMusicRef) {
+        const promise = window.bgMusicRef.play();
+        if (promise !== undefined) {
+          promise
+            .then(() => {
+              console.log('Background music playing in EnterID');
+            })
+            .catch(err => {
+              console.log('Music play still blocked in EnterID:', err);
+            });
+        }
+      }
+    };
+    playBgMusic();
   }, []);
 
   const handleInputChange = (index, input) => {
@@ -180,7 +200,12 @@ const EnterID = ({ onSubmit, onCancel }) => {
             style={{
               left: flake.left,
               animationDelay: flake.delay,
-              animationDuration: flake.duration,
+              '--snow-duration': flake.duration,
+              '--snow-sway': flake.sway,
+              '--snow-drift': flake.drift,
+              width: flake.size,
+              height: flake.size,
+              opacity: flake.opacity,
             }}
           />
         ))}
