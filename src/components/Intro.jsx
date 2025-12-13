@@ -10,7 +10,7 @@ const SCRIPTS = [
   {
     id: 2,
     sprite: 'santa_popup',
-    text: "But oh dear, the sky is full of giant candy canes! Help me fly through them to deliver your presents on time.\n\nReady to save Christmas? Let's fly!"
+    text: "But oh dear, the sky is full of giant candy canes! Help me fly through them to deliver your presents on time. Ready to save Christmas?\n Let's fly!"
   }
 ];
 
